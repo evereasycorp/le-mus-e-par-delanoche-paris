@@ -369,7 +369,7 @@ function UsersPanel() {
     queryKey: ["admin", "users"],
     queryFn: async () => {
       const [{ data: profs, error }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("id, display_name, avatar_url, is_suspended").order("display_name"),
+        supabase.from("profiles").select("id, display_name, is_suspended").order("display_name"),
         supabase.from("user_roles").select("user_id, role"),
       ]);
       if (error) throw error;
