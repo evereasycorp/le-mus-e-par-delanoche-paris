@@ -1,11 +1,34 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Heart, LogOut, User as UserIcon } from "lucide-react";
+import { Heart, LogOut, Shield, User as UserIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export function MuseumHeader() {
   const { user, signOut } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onAuthPage = pathname.startsWith("/auth");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!cancelled) setIsAdmin(!!data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
