@@ -14,16 +14,381 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      badges: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          label: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          label: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          label?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      brand_badges: {
+        Row: {
+          awarded_at: string
+          badge_id: string
+          brand_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_id: string
+          brand_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_id?: string
+          brand_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_badges_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brands: {
+        Row: {
+          bio: string | null
+          category: Database["public"]["Enums"]["musee_category"]
+          collections_count: number
+          cover_url: string | null
+          created_at: string
+          followers_count: number
+          history: string | null
+          id: string
+          instagram_handle: string | null
+          is_founder: boolean
+          is_published: boolean
+          is_verified: boolean
+          joined_museum_at: string
+          level: number
+          logo_url: string | null
+          name: string
+          owner_id: string | null
+          rank_score: number | null
+          recent_activity_score: number
+          sales_total: number
+          satisfaction_score: number
+          slug: string
+          tagline: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          category?: Database["public"]["Enums"]["musee_category"]
+          collections_count?: number
+          cover_url?: string | null
+          created_at?: string
+          followers_count?: number
+          history?: string | null
+          id?: string
+          instagram_handle?: string | null
+          is_founder?: boolean
+          is_published?: boolean
+          is_verified?: boolean
+          joined_museum_at?: string
+          level?: number
+          logo_url?: string | null
+          name: string
+          owner_id?: string | null
+          rank_score?: number | null
+          recent_activity_score?: number
+          sales_total?: number
+          satisfaction_score?: number
+          slug: string
+          tagline?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          category?: Database["public"]["Enums"]["musee_category"]
+          collections_count?: number
+          cover_url?: string | null
+          created_at?: string
+          followers_count?: number
+          history?: string | null
+          id?: string
+          instagram_handle?: string | null
+          is_founder?: boolean
+          is_published?: boolean
+          is_verified?: boolean
+          joined_museum_at?: string
+          level?: number
+          logo_url?: string | null
+          name?: string
+          owner_id?: string | null
+          rank_score?: number | null
+          recent_activity_score?: number
+          sales_total?: number
+          satisfaction_score?: number
+          slug?: string
+          tagline?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      collections: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          name: string
+          released_at: string | null
+          season: string | null
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          name: string
+          released_at?: string | null
+          season?: string | null
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          released_at?: string | null
+          season?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follows: {
+        Row: {
+          brand_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guestbook_entries: {
+        Row: {
+          brand_id: string
+          created_at: string
+          display_name: string
+          id: string
+          is_hidden: boolean
+          message: string
+          user_id: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          display_name: string
+          id?: string
+          is_hidden?: boolean
+          message: string
+          user_id: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_hidden?: boolean
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guestbook_entries_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pieces: {
+        Row: {
+          brand_id: string
+          category: Database["public"]["Enums"]["musee_category"]
+          collection_id: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          edition_size: number | null
+          id: string
+          is_published: boolean
+          name: string
+          photos: string[]
+          price_cents: number
+          sizes: string[]
+          stock_quantity: number
+          story: string | null
+        }
+        Insert: {
+          brand_id: string
+          category?: Database["public"]["Enums"]["musee_category"]
+          collection_id?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          edition_size?: number | null
+          id?: string
+          is_published?: boolean
+          name: string
+          photos?: string[]
+          price_cents?: number
+          sizes?: string[]
+          stock_quantity?: number
+          story?: string | null
+        }
+        Update: {
+          brand_id?: string
+          category?: Database["public"]["Enums"]["musee_category"]
+          collection_id?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          edition_size?: number | null
+          id?: string
+          is_published?: boolean
+          name?: string
+          photos?: string[]
+          price_cents?: number
+          sizes?: string[]
+          stock_quantity?: number
+          story?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pieces_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pieces_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "visiteur"
+        | "createur_en_attente"
+        | "createur_valide"
+        | "admin"
+        | "super_admin"
+      musee_category: "vetements" | "art" | "livres"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +515,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "visiteur",
+        "createur_en_attente",
+        "createur_valide",
+        "admin",
+        "super_admin",
+      ],
+      musee_category: ["vetements", "art", "livres"],
+    },
   },
 } as const
