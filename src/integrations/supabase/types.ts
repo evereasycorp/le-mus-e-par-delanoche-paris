@@ -265,6 +265,7 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
+          display_mode: string
           edition_size: number | null
           id: string
           is_published: boolean
@@ -282,6 +283,7 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          display_mode?: string
           edition_size?: number | null
           id?: string
           is_published?: boolean
@@ -299,6 +301,7 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          display_mode?: string
           edition_size?: number | null
           id?: string
           is_published?: boolean
@@ -331,18 +334,21 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_suspended: boolean
           updated_at: string
         }
         Insert: {
           created_at?: string
           display_name?: string | null
           id: string
+          is_suspended?: boolean
           updated_at?: string
         }
         Update: {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_suspended?: boolean
           updated_at?: string
         }
         Relationships: []
