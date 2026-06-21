@@ -63,31 +63,52 @@ export function CorridorScene({ items, header }: Props) {
       scene.style.setProperty("--ratio", ratio.toFixed(4));
 
       // chaque item : distance signée à la caméra
+      // Règle : UNE SEULE carte lisible à la fois. Les voisines sont déjà
+      // entièrement transparentes (opacity 0) avant que l'active n'arrive.
+      // Fenêtre de lisibilité : |d| < 0.5 ; au-delà, opacity = 0.
       const nodes = scene.querySelectorAll<HTMLElement>("[data-slot]");
       nodes.forEach((node) => {
         const slot = Number(node.dataset.slot);
         const d = slot - camera; // <0 derrière nous, >0 devant
-        // courbe : devant → scale grandit en s'approchant ; derrière → fond out
+        const ad = Math.abs(d);
+
+        // Scale : effet de profondeur conservé (grandit en s'approchant,
+        // continue à grandir en dépassant la caméra).
         let scale: number;
-        let opacity: number;
-        let z: number;
         if (d >= 0) {
-          // de loin (d=3) à devant (d=0)
           const k = Math.max(0, 1 - d / 3);
-          scale = 0.45 + k * 0.75; // 0.45 → 1.20
-          opacity = Math.max(0, Math.min(1, 1.1 - d / 2.5));
-          z = 10 + slot;
+          scale = 0.5 + k * 0.7; // loin 0.5 → devant 1.2
         } else {
-          // dépassé : on passe à travers (scale up + fade)
           const k = Math.min(1, -d / 0.8);
-          scale = 1.2 + k * 1.4;
-          opacity = Math.max(0, 1 - k);
-          z = 50 - slot;
+          scale = 1.2 + k * 1.2;
         }
+
+        // Opacity : fenêtre étroite et tranchante autour de d=0.
+        // d=0 → 1, |d|=0.35 → 1, |d|>=0.5 → 0. Aucun chevauchement lisible.
+        const FADE_IN = 0.35;
+        const FADE_OUT = 0.5;
+        let opacity: number;
+        if (ad <= FADE_IN) {
+          opacity = 1;
+        } else if (ad >= FADE_OUT) {
+          opacity = 0;
+        } else {
+          opacity = 1 - (ad - FADE_IN) / (FADE_OUT - FADE_IN);
+        }
+
+        // z-index : la carte la plus proche est toujours au premier plan.
+        // Les inactives (opacity 0) reculent loin derrière pour ne jamais
+        // intercepter le clic ni masquer l'active.
+        const z = opacity > 0 ? 100 - Math.round(ad * 100) : 0;
+
         node.style.setProperty("--s", scale.toFixed(3));
         node.style.setProperty("--o", opacity.toFixed(3));
-        node.style.zIndex = String(Math.round(z));
-        node.style.pointerEvents = opacity > 0.6 && d > -0.4 && d < 0.8 ? "auto" : "none";
+        node.style.zIndex = String(z);
+        // Cliquable uniquement quand cette carte est l'active dominante.
+        node.style.pointerEvents = ad < 0.3 ? "auto" : "none";
+        // visibility:hidden quand totalement transparente → 0 risque de
+        // capter un clic ou de laisser un fantôme lisible.
+        node.style.visibility = opacity <= 0.01 ? "hidden" : "visible";
       });
     };
 
