@@ -38,7 +38,17 @@ export function MuseumHeader() {
           <span className="font-sans text-[9px] tracking-museum text-muted-foreground uppercase">
             par Delanoche Paris
           </span>
-        </Link>
+              </Link>
+              {isAdmin ? (
+                <Link
+                  to="/admin"
+                  className="flex h-9 w-9 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-gold"
+                  aria-label="Cabinet du conservateur"
+                  title="Cabinet du conservateur"
+                >
+                  <Shield className="h-4 w-4" />
+                </Link>
+              ) : null}
 
         <nav className="flex items-center gap-1">
           {user ? (
