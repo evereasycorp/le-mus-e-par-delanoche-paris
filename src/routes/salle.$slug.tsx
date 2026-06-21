@@ -270,18 +270,144 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ExpoTab() {
+type Piece = {
+  id: string;
+  name: string;
+  description: string | null;
+  story: string | null;
+  photos: string[];
+  price_cents: number;
+  currency: string;
+  sizes: string[];
+  stock_quantity: number;
+  edition_size: number | null;
+  display_mode: "cintre" | "mannequin";
+};
+
+function ExpoTab({ brandId }: { brandId: string }) {
+  const { data: pieces, isLoading } = useQuery({
+    queryKey: ["pieces", brandId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pieces")
+        .select("id,name,description,story,photos,price_cents,currency,sizes,stock_quantity,edition_size,display_mode")
+        .eq("brand_id", brandId)
+        .eq("is_published", true)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as unknown as Piece[];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-80 animate-pulse rounded-sm bg-surface" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!pieces || pieces.length === 0) {
+    return (
+      <div className="gold-frame mx-auto max-w-md p-10 text-center fade-up">
+        <SectionLabel><span className="mx-auto">Exposition</span></SectionLabel>
+        <p className="mt-6 font-display text-2xl text-foreground">
+          Les vitrines sont en cours d'installation
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Les pièces de cette maison rejoindront prochainement la galerie.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="gold-frame mx-auto max-w-md p-10 text-center fade-up">
-      <SectionLabel><span className="mx-auto">Exposition</span></SectionLabel>
-      <p className="mt-6 font-display text-2xl text-foreground">
-        Les vitrines sont en cours d'installation
-      </p>
-      <p className="mt-3 text-sm text-muted-foreground">
-        Les pièces de cette maison rejoindront prochainement la galerie. Suivez la marque
-        pour être prévenu·e dès l'ouverture de l'exposition.
-      </p>
+    <div className="fade-up">
+      <div className="text-center">
+        <SectionLabel><span className="mx-auto">Exposition</span></SectionLabel>
+        <h2 className="mt-3 font-display text-2xl text-foreground">
+          {pieces.length} pièce{pieces.length > 1 ? "s" : ""} exposée{pieces.length > 1 ? "s" : ""}
+        </h2>
+      </div>
+      <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {pieces.map((p) => <PieceCard key={p.id} piece={p} />)}
+      </div>
     </div>
+  );
+}
+
+function PieceCard({ piece }: { piece: Piece }) {
+  const price = (piece.price_cents / 100).toLocaleString("fr-FR", {
+    style: "currency",
+    currency: piece.currency || "EUR",
+    maximumFractionDigits: 0,
+  });
+  const isMannequin = piece.display_mode === "mannequin";
+  return (
+    <article className="gold-frame group flex flex-col overflow-hidden bg-background/40">
+      <div className="relative aspect-[3/4] overflow-hidden bg-surface">
+        {piece.photos[0] ? (
+          <img
+            src={piece.photos[0]}
+            alt={piece.name}
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+            Photo à venir
+          </div>
+        )}
+        {/* Présentation : cintre vs mannequin */}
+        <div className="absolute left-0 top-0 m-3 flex items-center gap-1.5 border border-gold/40 bg-background/80 px-2 py-1 text-[9px] tracking-room uppercase text-gold backdrop-blur-sm">
+          {isMannequin ? (
+            <>
+              <span className="block h-2 w-2 rounded-full bg-gold" />
+              Sur mannequin
+            </>
+          ) : (
+            <>
+              <span className="block h-2 w-2 bg-gold" />
+              Sur cintre
+            </>
+          )}
+        </div>
+        {piece.edition_size && (
+          <div className="absolute right-0 top-0 m-3 border border-gold/40 bg-background/80 px-2 py-1 text-[9px] tracking-room uppercase text-gold-soft backdrop-blur-sm">
+            Édition {piece.edition_size}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="font-display text-xl text-foreground">{piece.name}</h3>
+        {piece.description && (
+          <p className="mt-1 text-xs italic text-muted-foreground">{piece.description}</p>
+        )}
+        <div className="mt-4 flex items-baseline justify-between border-t border-border/40 pt-3">
+          <span className="font-display text-lg text-gold-soft">{price}</span>
+          <span className="text-[10px] tracking-room uppercase text-muted-foreground">
+            Stock : {piece.stock_quantity}
+          </span>
+        </div>
+        {piece.sizes.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {piece.sizes.map((s) => (
+              <span key={s} className="border border-border/60 px-2 py-0.5 text-[10px] tracking-room uppercase text-muted-foreground">
+                {s}
+              </span>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          disabled
+          className="mt-5 w-full cursor-not-allowed rounded-sm border border-gold/30 bg-gold/5 py-2 text-[10px] tracking-room uppercase text-gold/60"
+        >
+          Acheter — Bientôt
+        </button>
+      </div>
+    </article>
   );
 }
 
