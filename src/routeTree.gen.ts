@@ -9,38 +9,92 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as FavorisRouteImport } from './routes/favoris'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SalleSlugRouteImport } from './routes/salle.$slug'
+import { Route as EtageNumRouteImport } from './routes/etage.$num'
 
+const FavorisRoute = FavorisRouteImport.update({
+  id: '/favoris',
+  path: '/favoris',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SalleSlugRoute = SalleSlugRouteImport.update({
+  id: '/salle/$slug',
+  path: '/salle/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EtageNumRoute = EtageNumRouteImport.update({
+  id: '/etage/$num',
+  path: '/etage/$num',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/favoris': typeof FavorisRoute
+  '/etage/$num': typeof EtageNumRoute
+  '/salle/$slug': typeof SalleSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/favoris': typeof FavorisRoute
+  '/etage/$num': typeof EtageNumRoute
+  '/salle/$slug': typeof SalleSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/favoris': typeof FavorisRoute
+  '/etage/$num': typeof EtageNumRoute
+  '/salle/$slug': typeof SalleSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/auth' | '/favoris' | '/etage/$num' | '/salle/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/auth' | '/favoris' | '/etage/$num' | '/salle/$slug'
+  id: '__root__' | '/' | '/auth' | '/favoris' | '/etage/$num' | '/salle/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  FavorisRoute: typeof FavorisRoute
+  EtageNumRoute: typeof EtageNumRoute
+  SalleSlugRoute: typeof SalleSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/favoris': {
+      id: '/favoris'
+      path: '/favoris'
+      fullPath: '/favoris'
+      preLoaderRoute: typeof FavorisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +102,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/salle/$slug': {
+      id: '/salle/$slug'
+      path: '/salle/$slug'
+      fullPath: '/salle/$slug'
+      preLoaderRoute: typeof SalleSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/etage/$num': {
+      id: '/etage/$num'
+      path: '/etage/$num'
+      fullPath: '/etage/$num'
+      preLoaderRoute: typeof EtageNumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  FavorisRoute: FavorisRoute,
+  EtageNumRoute: EtageNumRoute,
+  SalleSlugRoute: SalleSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
