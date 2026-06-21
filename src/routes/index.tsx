@@ -7,7 +7,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Hall principal — Le Musée par Delanoche Paris" },
-      { name: "description", content: "Entrez dans le Hall du Musée. Trois étages, trois disciplines : Vêtements, Art, Livres. Étage 1 ouvert." },
+      { name: "description", content: "Entrez dans le Hall du Musée. Trois étages, trois disciplines : Vêtements, Art, Littérature. Étage 1 ouvert." },
       { property: "og:title", content: "Le Musée par Delanoche Paris" },
       { property: "og:description", content: "Hall monumental, étages, expositions de créateurs." },
     ],
