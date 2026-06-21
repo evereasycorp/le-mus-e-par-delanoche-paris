@@ -103,90 +103,50 @@ function Corridor() {
     },
   });
 
+  const items: CorridorItem[] = (brands ?? []).map((b, i) => ({
+    id: b.id,
+    slug: b.slug,
+    rank: i + 1,
+    name: b.name,
+    tagline: b.tagline,
+    logoUrl: b.logo_url,
+    level: b.level,
+    badges: (b.brand_badges ?? []).map((bb) => bb.badge).filter(Boolean) as BrandBadge[],
+  }));
+
   return (
     <div className="min-h-screen">
       <MuseumHeader />
 
-      {/* Bannière couloir */}
-      <section className="relative h-44 w-full overflow-hidden border-b border-border/60">
-        <img
-          src={corridorImg}
-          alt="Couloir des créateurs"
-          loading="lazy"
-          width={1280}
-          height={800}
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/55 to-background" />
-        <div className="vignette absolute inset-0" />
-        <div className="relative mx-auto flex h-full max-w-5xl flex-col items-center justify-center px-5 text-center">
-          <p className="text-[10px] tracking-museum uppercase text-gold">Étage 1</p>
-          <h1 className="mt-2 font-display text-3xl text-gold-soft">Couloir des créateurs</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Classement par rayonnement · ventes · satisfaction · activité
-          </p>
-        </div>
-      </section>
-
-      <PageFrame>
-        {isLoading ? (
+      {isLoading ? (
+        <PageFrame>
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="h-24 animate-pulse rounded-sm bg-surface" />
             ))}
           </div>
-        ) : (
-          <ol className="space-y-4">
-            {brands?.map((b, i) => (
-              <li key={b.id} className="fade-up" style={{ animationDelay: `${i * 60}ms` }}>
-                <BrandDoor brand={b} rank={i + 1} />
-              </li>
-            ))}
-          </ol>
-        )}
-      </PageFrame>
+        </PageFrame>
+      ) : items.length === 0 ? (
+        <PageFrame>
+          <p className="text-center text-sm text-muted-foreground">
+            Aucune maison n'a encore ouvert ses portes dans ce couloir.
+          </p>
+        </PageFrame>
+      ) : (
+        <CorridorScene
+          items={items}
+          header={
+            <>
+              <p className="text-[10px] tracking-museum uppercase text-gold">Étage 1</p>
+              <h1 className="mt-1 font-display text-2xl text-gold-soft">Couloir des créateurs</h1>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Faites défiler pour avancer · {items.length} maison{items.length > 1 ? "s" : ""}
+              </p>
+            </>
+          }
+        />
+      )}
     </div>
   );
 }
 
-function BrandDoor({ brand, rank }: { brand: BrandRow; rank: number }) {
-  const badges = brand.brand_badges?.map((bb) => bb.badge).filter(Boolean) ?? [];
-  return (
-    <Link
-      to="/salle/$slug"
-      params={{ slug: brand.slug }}
-      className="gold-frame group relative block overflow-hidden px-5 py-5 transition-all hover:translate-y-[-1px] sm:px-7 sm:py-6"
-    >
-      <div className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 shimmer-gold pointer-events-none" />
-      <div className="flex items-start gap-4">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-gold/30 bg-background/40 font-display text-xl text-gold">
-          {brand.logo_url ? (
-            <img src={brand.logo_url} alt={brand.name} className="h-full w-full object-cover" />
-          ) : (
-            brand.name.charAt(0)
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="text-[10px] tracking-room uppercase text-gold/70">N° {String(rank).padStart(2, "0")}</span>
-            <span className="text-[10px] tracking-room uppercase text-muted-foreground">Niv. {brand.level}</span>
-          </div>
-          <h3 className="mt-0.5 truncate font-display text-xl text-foreground">{brand.name}</h3>
-          {brand.tagline && (
-            <p className="truncate text-xs text-muted-foreground">{brand.tagline}</p>
-          )}
-          {badges.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {badges.slice(0, 4).map((bd) => (
-                <BadgePill key={bd.slug} badge={bd} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-gold transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-      </div>
-    </Link>
-  );
-}
