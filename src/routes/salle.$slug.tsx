@@ -208,7 +208,7 @@ function BrandRoom({ slug }: { slug: string }) {
 
       <div className="mx-auto max-w-5xl px-5 py-10">
         {tab === "wall" && <WallTab brand={brand} />}
-        {tab === "expo" && <ExpoTab />}
+        {tab === "expo" && <ExpoTab brandId={brand.id} />}
         {tab === "livre" && <GuestbookTab brandId={brand.id} />}
       </div>
     </div>
