@@ -84,6 +84,12 @@ function Hall() {
         <p className="mt-1 text-[10px] tracking-museum uppercase text-muted-foreground">
           Par Delanoche Paris · MMXXVI
         </p>
+        <Link
+          to="/admin-login"
+          className="mt-6 inline-block rounded-sm border border-border px-4 py-2 text-[10px] tracking-room uppercase text-muted-foreground hover:border-gold hover:text-gold"
+        >
+          Admin (dev)
+        </Link>
       </footer>
     </div>
   );
