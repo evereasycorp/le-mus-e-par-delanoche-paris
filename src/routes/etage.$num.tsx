@@ -21,7 +21,7 @@ export const Route = createFileRoute("/etage/$num")({
 const FLOORS: Record<string, { label: string; subtitle: string; open: boolean }> = {
   "1": { label: "Vêtements", subtitle: "Couloir des créateurs", open: true },
   "2": { label: "Art", subtitle: "En préparation", open: false },
-  "3": { label: "Livres", subtitle: "En préparation", open: false },
+  "3": { label: "Littérature", subtitle: "En préparation", open: false },
 };
 
 type BrandRow = {

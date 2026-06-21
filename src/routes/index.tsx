@@ -7,7 +7,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Hall principal — Le Musée par Delanoche Paris" },
-      { name: "description", content: "Entrez dans le Hall du Musée. Trois étages, trois disciplines : Vêtements, Art, Livres. Étage 1 ouvert." },
+      { name: "description", content: "Entrez dans le Hall du Musée. Trois étages, trois disciplines : Vêtements, Art, Littérature. Étage 1 ouvert." },
       { property: "og:title", content: "Le Musée par Delanoche Paris" },
       { property: "og:description", content: "Hall monumental, étages, expositions de créateurs." },
     ],
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
 const FLOORS = [
   { num: 1, label: "Vêtements", subtitle: "Maisons, ateliers & couture", href: "/etage/1", open: true },
   { num: 2, label: "Art", subtitle: "Œuvres & galeries", href: "/etage/2", open: false },
-  { num: 3, label: "Livres", subtitle: "Éditions & manuscrits", href: "/etage/3", open: false },
+  { num: 3, label: "Littérature", subtitle: "Éditions & manuscrits", href: "/etage/3", open: false },
 ] as const;
 
 function Hall() {
