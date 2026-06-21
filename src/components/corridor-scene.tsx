@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
 import { BadgePill, type BrandBadge } from "@/components/brand-badges";
 import corridorImg from "@/assets/corridor.jpg";
