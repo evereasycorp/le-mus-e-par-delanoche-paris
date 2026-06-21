@@ -9,12 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as FavorisRouteImport } from './routes/favoris'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SalleSlugRouteImport } from './routes/salle.$slug'
 import { Route as EtageNumRouteImport } from './routes/etage.$num'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FavorisRoute = FavorisRouteImport.update({
   id: '/favoris',
   path: '/favoris',
@@ -45,6 +57,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/favoris': typeof FavorisRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/etage/$num': typeof EtageNumRoute
   '/salle/$slug': typeof SalleSlugRoute
 }
@@ -52,6 +66,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/favoris': typeof FavorisRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/etage/$num': typeof EtageNumRoute
   '/salle/$slug': typeof SalleSlugRoute
 }
@@ -60,27 +76,67 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/favoris': typeof FavorisRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/etage/$num': typeof EtageNumRoute
   '/salle/$slug': typeof SalleSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/favoris' | '/etage/$num' | '/salle/$slug'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/favoris'
+    | '/reset-password'
+    | '/sitemap.xml'
+    | '/etage/$num'
+    | '/salle/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/favoris' | '/etage/$num' | '/salle/$slug'
-  id: '__root__' | '/' | '/auth' | '/favoris' | '/etage/$num' | '/salle/$slug'
+  to:
+    | '/'
+    | '/auth'
+    | '/favoris'
+    | '/reset-password'
+    | '/sitemap.xml'
+    | '/etage/$num'
+    | '/salle/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/favoris'
+    | '/reset-password'
+    | '/sitemap.xml'
+    | '/etage/$num'
+    | '/salle/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   FavorisRoute: typeof FavorisRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   EtageNumRoute: typeof EtageNumRoute
   SalleSlugRoute: typeof SalleSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/favoris': {
       id: '/favoris'
       path: '/favoris'
@@ -123,6 +179,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   FavorisRoute: FavorisRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   EtageNumRoute: EtageNumRoute,
   SalleSlugRoute: SalleSlugRoute,
 }
