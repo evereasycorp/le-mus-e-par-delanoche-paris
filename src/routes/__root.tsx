@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+import { AdminTabBar } from "@/components/admin-tab-bar";
 
 function NotFoundComponent() {
   return (
@@ -108,6 +109,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Outlet />
+        <AdminTabBar />
         <Toaster theme="dark" position="top-center" />
       </AuthProvider>
     </QueryClientProvider>
