@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
 import { BadgePill, type BrandBadge } from "@/components/brand-badges";
 import corridorImg from "@/assets/corridor.jpg";
@@ -243,63 +243,126 @@ function BackdropLayers() {
 }
 
 function CorridorDoor({ item, slot }: { item: CorridorItem; slot: number }) {
+  const navigate = useNavigate();
+  const [opening, setOpening] = useState(false);
+
+  const handleEnter = (e: MouseEvent) => {
+    e.preventDefault();
+    if (opening) return;
+    setOpening(true);
+    // Durée totale ~780ms : fade carte (180ms) + ouverture battants (520ms) + push (80ms)
+    window.setTimeout(() => {
+      navigate({ to: "/salle/$slug", params: { slug: item.slug } });
+    }, 720);
+  };
+
   return (
     <div
       data-slot={slot}
       className="absolute left-1/2 top-1/2"
       style={{
-        transform: "translate3d(-50%, -50%, 0) scale(var(--s, 0.6))",
+        transform: `translate3d(-50%, -50%, 0) scale(calc(var(--s, 0.6) * ${opening ? 1.18 : 1}))`,
         opacity: "var(--o, 0)",
         transformOrigin: "50% 55%",
-        transition: "opacity 120ms linear",
+        transition: "opacity 120ms linear, transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
         willChange: "transform, opacity",
       }}
     >
-      <Link
-        to="/salle/$slug"
-        params={{ slug: item.slug }}
-        className="gold-frame group relative block w-[78vw] max-w-sm overflow-hidden bg-background/85 px-5 py-5 backdrop-blur-sm"
-      >
-        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 shimmer-gold" />
+      <div className="relative w-[78vw] max-w-sm" style={{ perspective: "900px" }}>
+        {/* Carte d'information (fade out à l'ouverture) */}
+        <Link
+          to="/salle/$slug"
+          params={{ slug: item.slug }}
+          onClick={handleEnter}
+          className="gold-frame group relative block overflow-hidden bg-background/85 px-5 py-5 backdrop-blur-sm"
+          style={{
+            opacity: opening ? 0 : 1,
+            transition: "opacity 180ms ease-out",
+          }}
+        >
+          <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 shimmer-gold" />
 
-        <div className="flex items-baseline justify-between">
-          <span className="text-[10px] tracking-room uppercase text-gold/80">
-            Porte N° {String(item.rank).padStart(2, "0")}
-          </span>
-          <span className="text-[10px] tracking-room uppercase text-muted-foreground">
-            Niv. {item.level}
-          </span>
-        </div>
-
-        <div className="mt-3 flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-gold/40 bg-background/60 font-display text-2xl text-gold">
-            {item.logoUrl ? (
-              <img src={item.logoUrl} alt={item.name} className="h-full w-full object-cover" />
-            ) : (
-              item.name.charAt(0)
-            )}
+          <div className="flex items-baseline justify-between">
+            <span className="text-[10px] tracking-room uppercase text-gold/80">
+              Porte N° {String(item.rank).padStart(2, "0")}
+            </span>
+            <span className="text-[10px] tracking-room uppercase text-muted-foreground">
+              Niv. {item.level}
+            </span>
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate font-display text-2xl text-gold-soft">{item.name}</h3>
-            {item.tagline && (
-              <p className="truncate text-xs text-muted-foreground">{item.tagline}</p>
-            )}
-          </div>
-        </div>
 
-        {item.badges.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {item.badges.slice(0, 4).map((bd) => (
-              <BadgePill key={bd.slug} badge={bd} />
-            ))}
+          <div className="mt-3 flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-gold/40 bg-background/60 font-display text-2xl text-gold">
+              {item.logoUrl ? (
+                <img src={item.logoUrl} alt={item.name} className="h-full w-full object-cover" />
+              ) : (
+                item.name.charAt(0)
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate font-display text-2xl text-gold-soft">{item.name}</h3>
+              {item.tagline && (
+                <p className="truncate text-xs text-muted-foreground">{item.tagline}</p>
+              )}
+            </div>
+          </div>
+
+          {item.badges.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {item.badges.slice(0, 4).map((bd) => (
+                <BadgePill key={bd.slug} badge={bd} />
+              ))}
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center justify-between border-t border-gold/20 pt-3">
+            <span className="text-[10px] tracking-room uppercase text-gold">Entrer dans la salle</span>
+            <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </div>
+        </Link>
+
+        {/* Battants de porte + halo lumineux (visibles uniquement à l'ouverture) */}
+        {opening && (
+          <div
+            className="pointer-events-none absolute inset-0 overflow-hidden"
+            style={{ transformStyle: "preserve-3d" }}
+            aria-hidden
+          >
+            {/* Halo lumineux derrière les battants */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse at center, color-mix(in oklch, var(--gold) 55%, white) 0%, color-mix(in oklch, var(--gold) 30%, transparent) 35%, transparent 70%)",
+                opacity: 0,
+                animation: "doorLight 700ms ease-out forwards",
+              }}
+            />
+            {/* Battant gauche */}
+            <div
+              className="absolute inset-y-0 left-0 w-1/2 border border-gold/50 bg-background"
+              style={{
+                transformOrigin: "left center",
+                background:
+                  "linear-gradient(90deg, color-mix(in oklch, var(--gold) 18%, var(--background)) 0%, color-mix(in oklch, var(--gold) 5%, var(--background)) 100%)",
+                animation: "doorLeftOpen 600ms cubic-bezier(0.65, 0, 0.35, 1) 120ms forwards",
+                boxShadow: "inset -2px 0 0 color-mix(in oklch, var(--gold) 40%, transparent)",
+              }}
+            />
+            {/* Battant droit */}
+            <div
+              className="absolute inset-y-0 right-0 w-1/2 border border-gold/50 bg-background"
+              style={{
+                transformOrigin: "right center",
+                background:
+                  "linear-gradient(270deg, color-mix(in oklch, var(--gold) 18%, var(--background)) 0%, color-mix(in oklch, var(--gold) 5%, var(--background)) 100%)",
+                animation: "doorRightOpen 600ms cubic-bezier(0.65, 0, 0.35, 1) 120ms forwards",
+                boxShadow: "inset 2px 0 0 color-mix(in oklch, var(--gold) 40%, transparent)",
+              }}
+            />
           </div>
         )}
-
-        <div className="mt-4 flex items-center justify-between border-t border-gold/20 pt-3">
-          <span className="text-[10px] tracking-room uppercase text-gold">Entrer dans la salle</span>
-          <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </div>
-      </Link>
+      </div>
     </div>
   );
 }
