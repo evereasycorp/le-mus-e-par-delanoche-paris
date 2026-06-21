@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { ArrowUpRight, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { MuseumHeader, PageFrame, SectionLabel } from "@/components/museum-chrome";
-import { BadgePill, type BrandBadge } from "@/components/brand-badges";
-import corridorImg from "@/assets/corridor.jpg";
+import { type BrandBadge } from "@/components/brand-badges";
+import { CorridorScene, type CorridorItem } from "@/components/corridor-scene";
 
 export const Route = createFileRoute("/etage/$num")({
   head: ({ params }) => ({
