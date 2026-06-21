@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
 const FLOORS = [
   { num: 1, label: "Vêtements", subtitle: "Maisons, ateliers & couture", href: "/etage/1", open: true },
   { num: 2, label: "Art", subtitle: "Œuvres & galeries", href: "/etage/2", open: false },
-  { num: 3, label: "Livres", subtitle: "Éditions & manuscrits", href: "/etage/3", open: false },
+  { num: 3, label: "Littérature", subtitle: "Éditions & manuscrits", href: "/etage/3", open: false },
 ] as const;
 
 function Hall() {
