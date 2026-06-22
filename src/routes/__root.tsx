@@ -35,26 +35,58 @@ function NotFoundComponent() {
   );
 }
 
+function isChunkLoadError(error: Error): boolean {
+  const msg = String(error?.message ?? "");
+  return (
+    /Failed to fetch dynamically imported module/i.test(msg) ||
+    /Importing a module script failed/i.test(msg) ||
+    /ChunkLoadError/i.test(msg) ||
+    /error loading dynamically imported module/i.test(msg)
+  );
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+  console.error("[RootErrorBoundary]", error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    // Auto-recover from stale chunk references (post-deploy hash mismatch).
+    if (isChunkLoadError(error) && typeof window !== "undefined") {
+      const key = "__lovable_chunk_reload__";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+      }
+    }
   }, [error]);
+
+  const chunkErr = isChunkLoadError(error);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 text-center">
       <div className="max-w-md">
-        <h1 className="font-display text-2xl text-foreground">Le musée a vacillé</h1>
+        <h1 className="font-display text-2xl text-foreground">
+          {chunkErr ? "Mise à jour du Musée" : "Une erreur est survenue"}
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Une porte s'est refermée. Vous pouvez réessayer ou rejoindre le Hall.
+          {chunkErr
+            ? "Le Musée a été mis à jour. Rechargez la page pour continuer."
+            : "Vous pouvez réessayer ou rejoindre le Hall."}
         </p>
+        {error?.message && (
+          <pre className="mt-4 max-h-48 overflow-auto rounded-sm border border-border bg-background/50 p-3 text-left text-[10px] text-muted-foreground whitespace-pre-wrap break-all">
+            {error.message}
+          </pre>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              if (chunkErr) { window.location.reload(); return; }
+              router.invalidate(); reset();
+            }}
             className="rounded-sm border border-gold/40 px-4 py-2 text-[10px] tracking-room uppercase text-gold-soft hover:bg-gold hover:text-primary-foreground"
           >
-            Réessayer
+            {chunkErr ? "Recharger" : "Réessayer"}
           </button>
           <a
             href="/"
