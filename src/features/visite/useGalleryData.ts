@@ -27,7 +27,7 @@ export function useGalleryData(floor: string) {
       const { data, error } = await supabase
         .from("brands")
         .select("id, slug, name, rank_score")
-        .eq("category", category)
+        .eq("category", category as "vetements" | "art" | "livres")
         .eq("is_published", true)
         .order("rank_score", { ascending: false });
       if (error) throw error;
