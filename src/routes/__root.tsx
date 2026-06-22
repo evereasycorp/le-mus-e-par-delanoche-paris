@@ -61,6 +61,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   const chunkErr = isChunkLoadError(error);
+  const errorDetails = error?.stack || error?.message || String(error);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 text-center">
@@ -73,9 +74,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             ? "Le Musée a été mis à jour. Rechargez la page pour continuer."
             : "Vous pouvez réessayer ou rejoindre le Hall."}
         </p>
-        {error?.message && (
+        {errorDetails && (
           <pre className="mt-4 max-h-48 overflow-auto rounded-sm border border-border bg-background/50 p-3 text-left text-[10px] text-muted-foreground whitespace-pre-wrap break-all">
-            {error.message}
+            {errorDetails}
           </pre>
         )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
