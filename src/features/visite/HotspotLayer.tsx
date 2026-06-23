@@ -87,16 +87,18 @@ export function HotspotLayer({
   }, [hotspots, yaw, pitch, fov, size]);
 
   // Highlight nearest nav hotspot (cône ±15°)
-  const highlightedNavId = useMemo(() => {
-    let best: { id: string; angle: number } | null = null;
+  const highlightedNavId = useMemo<string | null>(() => {
+    let bestId: string | null = null;
+    let bestAngle = Infinity;
     projected.forEach(({ h }) => {
       if (h.type !== "nav") return;
       const rel = Math.abs(((degToRad(h.yaw) - yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-      if (rel < degToRad(15) && (!best || rel < best.angle)) {
-        best = { id: h.id, angle: rel };
+      if (rel < degToRad(15) && rel < bestAngle) {
+        bestId = h.id;
+        bestAngle = rel;
       }
     });
-    return best?.id ?? null;
+    return bestId;
   }, [projected, yaw]);
 
   return (
