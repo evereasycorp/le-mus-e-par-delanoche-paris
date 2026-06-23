@@ -34,13 +34,16 @@ type PannellumScene = {
 
 type PannellumViewerInstance = {
   destroy: () => void;
-  loadScene: (id: string) => void;
+  loadScene: (id: string, pitch?: number | "same", yaw?: number | "same", hfov?: number | "same") => void;
   setHfov: (n: number) => void;
   getHfov: () => number;
   getYaw?: () => number;
   getPitch?: () => number;
+  getScene?: () => string;
+  mouseEventToCoords?: (e: MouseEvent) => [number, number]; // [pitch, yaw]
   on: (ev: string, cb: (...args: unknown[]) => void) => void;
 };
+
 
 declare global {
   interface Window {
