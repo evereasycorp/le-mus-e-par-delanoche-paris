@@ -12,8 +12,12 @@ type PannellumHotSpot = {
   text?: string;
   sceneId?: string;
   cssClass?: string;
+  targetYaw?: number;
+  targetPitch?: number;
+  targetHfov?: number;
   clickHandlerFunc?: () => void;
 };
+
 
 type PannellumScene = {
   type: "equirectangular";
@@ -57,11 +61,12 @@ export type PannellumViewerHandle = {
   zoomOut: () => void;
 };
 
-// Yaw range used to spread doors along visible corridor openings.
-// Brands are evenly distributed: no overlap regardless of how many.
-const CORRIDOR_YAW_MIN = -150;
-const CORRIDOR_YAW_MAX = 150;
-const DOOR_PITCH = -2;
+// Floor pitch for nav/door circles — placed visibly on the ground close to viewer.
+const FLOOR_PITCH = -32;
+// Paired door yaws: first pair flanks the viewer at the START of the corridor,
+// subsequent pairs converge toward the depth of the hallway.
+const DOOR_PAIR_YAWS = [85, 50, 28, 16, 10];
+
 
 export function PannellumViewer({
   rooms,
@@ -117,14 +122,21 @@ export function PannellumViewer({
         if (h.type === "nav" && h.target_room_id) {
           const targetSlug = idToSlug.get(h.target_room_id);
           if (!targetSlug) continue;
+          const targetRoom = rooms.find((r) => r.id === h.target_room_id);
+          // Always land facing forward at the start of the next scene.
+          const targetYaw = targetRoom?.kind === "entrance" ? 0 : 0;
           hs.push({
             type: "scene",
             sceneId: targetSlug,
             yaw: h.yaw,
-            pitch: h.pitch,
+            pitch: FLOOR_PITCH,
+            targetYaw,
+            targetPitch: 0,
+            targetHfov: 100,
             text: h.label ?? "Aller",
             cssClass: "pnlm-hotspot-museum pnlm-hotspot-nav",
           });
+
         } else if (room.kind === "salle" && h.type === "garmentInfo") {
           const idx = h.slot_index ?? 0;
           hs.push({
@@ -153,20 +165,19 @@ export function PannellumViewer({
         }
       }
 
-      // Corridor: one door per brand, evenly spaced — supports unlimited brands.
+      // Corridor: doors paired left/right at the start of the corridor,
+      // converging into the depth — first 2 brands flank the viewer on arrival.
       if (room.kind === "corridor" && salleRoom && brands.length > 0) {
         const salleSlug = idToSlug.get(salleRoom.id) ?? salleRoom.slug ?? salleRoom.id;
-        const n = brands.length;
-        const span = CORRIDOR_YAW_MAX - CORRIDOR_YAW_MIN;
         brands.forEach((brand, i) => {
-          const yaw =
-            n === 1
-              ? 0
-              : CORRIDOR_YAW_MIN + (span * i) / (n - 1);
+          const pairIndex = Math.floor(i / 2);
+          const side = i % 2 === 0 ? -1 : 1; // even = left, odd = right
+          const baseYaw = DOOR_PAIR_YAWS[pairIndex] ?? 6;
+          const yaw = side * baseYaw;
           hs.push({
             type: "info",
             yaw,
-            pitch: DOOR_PITCH,
+            pitch: FLOOR_PITCH,
             text: brand.name,
             cssClass: "pnlm-hotspot-museum pnlm-hotspot-door",
             clickHandlerFunc: () => {
@@ -183,6 +194,7 @@ export function PannellumViewer({
           });
         });
       }
+
 
       scenes[sceneId] = {
         type: "equirectangular",

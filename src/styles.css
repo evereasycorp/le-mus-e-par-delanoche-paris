@@ -187,6 +187,7 @@
 /* ---------- Pannellum 360° viewer overrides ---------- */
 .pnlm-container { background: #0d0a07 !important; }
 .pnlm-load-box, .pnlm-about-msg { display: none !important; }
+
 .pnlm-hotspot-museum {
   width: 44px; height: 44px; border-radius: 9999px;
   background: rgba(244, 241, 234, 0.92);
@@ -196,11 +197,53 @@
   transition: transform 160ms ease, background 160ms ease;
 }
 .pnlm-hotspot-museum:hover { transform: scale(1.08); background: #F4F1EA; }
-.pnlm-hotspot-museum.pnlm-hotspot-nav::after {
-  content: ""; display: block; width: 12px; height: 12px; margin: 14px auto;
-  border-right: 2px solid #2b2218; border-bottom: 2px solid #2b2218;
-  transform: rotate(-45deg);
+
+/* Floor disks — used for navigation (nav) AND brand doors in the corridor.
+   Rendered as an elliptical pad on the ground with a soft gold halo. */
+.pnlm-hotspot-museum.pnlm-hotspot-nav,
+.pnlm-hotspot-museum.pnlm-hotspot-door {
+  width: 72px;
+  height: 36px;
+  border-radius: 9999px;
+  background:
+    radial-gradient(ellipse at center, rgba(244,241,234,0.92) 0%, rgba(244,241,234,0.55) 60%, rgba(244,241,234,0.0) 100%);
+  border: 1px solid rgba(176,141,87,0.85);
+  box-shadow:
+    0 0 0 6px rgba(176,141,87,0.10),
+    0 0 0 14px rgba(176,141,87,0.05),
+    0 10px 28px rgba(0,0,0,0.55);
+  animation: floor-pulse 2.4s ease-in-out infinite;
 }
+.pnlm-hotspot-museum.pnlm-hotspot-nav:hover,
+.pnlm-hotspot-museum.pnlm-hotspot-door:hover {
+  background:
+    radial-gradient(ellipse at center, #F4F1EA 0%, rgba(244,241,234,0.75) 60%, rgba(244,241,234,0.0) 100%);
+  box-shadow:
+    0 0 0 8px rgba(176,141,87,0.18),
+    0 0 0 18px rgba(176,141,87,0.10),
+    0 12px 32px rgba(0,0,0,0.65);
+  transform: scale(1.06);
+}
+.pnlm-hotspot-museum.pnlm-hotspot-nav::after {
+  content: ""; display: block;
+  width: 10px; height: 10px;
+  margin: 13px auto 0;
+  border-right: 2px solid #2b2218;
+  border-bottom: 2px solid #2b2218;
+  transform: rotate(45deg);
+}
+.pnlm-hotspot-museum.pnlm-hotspot-door::after {
+  content: ""; display: block;
+  width: 8px; height: 8px;
+  margin: 14px auto 0;
+  border-radius: 9999px;
+  background: #B08D57;
+}
+@keyframes floor-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(176,141,87,0.10), 0 0 0 14px rgba(176,141,87,0.05), 0 10px 28px rgba(0,0,0,0.55); }
+  50%      { box-shadow: 0 0 0 10px rgba(176,141,87,0.16), 0 0 0 22px rgba(176,141,87,0.08), 0 10px 28px rgba(0,0,0,0.55); }
+}
+
 .pnlm-hotspot-museum.pnlm-hotspot-garment { background: rgba(176, 141, 87, 0.85); }
 .pnlm-hotspot-museum.pnlm-hotspot-garment::after {
   content: "·"; display: block; text-align: center; line-height: 40px;
@@ -214,21 +257,7 @@
   background: rgba(244, 241, 234, 0.45);
   border-style: dashed; opacity: 0.6; cursor: default;
 }
-/* Couloir: portes des créateurs, discrètes au sol */
-.pnlm-hotspot-museum.pnlm-hotspot-door {
-  width: 36px; height: 36px;
-  background: rgba(244, 241, 234, 0.75);
-  border: 1px solid #B08D57;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 0 4px rgba(176,141,87,0.12);
-}
-.pnlm-hotspot-museum.pnlm-hotspot-door::after {
-  content: ""; display: block; width: 8px; height: 8px; margin: 13px auto;
-  border-radius: 9999px; background: #B08D57;
-}
-.pnlm-hotspot-museum.pnlm-hotspot-door:hover {
-  background: #F4F1EA;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.55), 0 0 0 8px rgba(176,141,87,0.18);
-}
+
 .pnlm-tooltip span {
   background: rgba(43, 34, 24, 0.92) !important;
   color: #F4F1EA !important;
@@ -236,3 +265,4 @@
   font-size: 11px !important; letter-spacing: 0.04em;
   border-radius: 2px !important; padding: 4px 8px !important;
 }
+
