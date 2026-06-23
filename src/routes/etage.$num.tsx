@@ -7,9 +7,8 @@ import { useVisiteStore } from "@/features/visite/store";
 import {
   useRooms,
   useAllHotspots,
-  useSalleBrands,
-  useBrands,
-  usePieces,
+  useAllBrands,
+  usePiecesByBrand,
 } from "@/features/visite/usePanoramaData";
 import {
   PannellumViewer,
@@ -97,16 +96,18 @@ function FloorPage() {
 function FloorViewer({ floor }: { floor: number }) {
   const { data: rooms = [] } = useRooms(floor);
   const { data: hotspots = [] } = useAllHotspots(floor);
-  const { data: salleBrands = [] } = useSalleBrands(floor);
+  const { data: brands = [] } = useAllBrands();
 
   const currentRoomId = useVisiteStore((s) => s.currentRoomId);
   const setRoom = useVisiteStore((s) => s.setRoom);
+  const activeBrandId = useVisiteStore((s) => s.activeBrandId);
+  const setActiveBrand = useVisiteStore((s) => s.setActiveBrand);
   const sheet = useVisiteStore((s) => s.sheet);
   const openGarment = useVisiteStore((s) => s.openGarment);
   const openBrand = useVisiteStore((s) => s.openBrand);
   const closeSheet = useVisiteStore((s) => s.closeSheet);
 
-  // Initial scene: entrance > first room
+  // Initial scene: entrance
   useEffect(() => {
     if (!currentRoomId && rooms.length > 0) {
       const first =
@@ -122,39 +123,35 @@ function FloorViewer({ floor }: { floor: number }) {
     [rooms, currentRoomId],
   );
 
-  // Fetch all brands referenced by salle_brands so PannellumViewer can label walls
-  const brandIds = useMemo(
-    () => Array.from(new Set(salleBrands.map((s) => s.brand_id).filter(Boolean) as string[])),
-    [salleBrands],
-  );
-  const { data: brandsArr = [] } = useBrands(brandIds);
-  const brandsById = useMemo(() => new Map(brandsArr.map((b) => [b.id, b])), [brandsArr]);
+  // Pieces of the currently-selected creator (drives mannequins + penderies)
+  const { data: activeBrandPieces = [] } = usePiecesByBrand(activeBrandId);
 
-  // Pieces referenced by garmentInfo hotspots
-  const pieceIds = useMemo(
-    () => Array.from(new Set(hotspots.map((h) => h.garment_id).filter(Boolean) as string[])),
-    [hotspots],
+  const brandsById = useMemo(() => new Map(brands.map((b) => [b.id, b])), [brands]);
+  const piecesById = useMemo(
+    () => new Map(activeBrandPieces.map((p) => [p.id, p])),
+    [activeBrandPieces],
   );
-  const { data: piecesArr = [] } = usePieces(pieceIds);
-  const piecesById = useMemo(() => new Map(piecesArr.map((p) => [p.id, p])), [piecesArr]);
 
   const viewerRef = useRef<PannellumViewerHandle | null>(null);
 
   const activeGarment =
     sheet.kind === "garment" ? (piecesById.get(sheet.garmentId) ?? null) : null;
-  const activeBrand = sheet.kind === "brand" ? (brandsById.get(sheet.brandId) ?? null) : null;
+  const activeSheetBrand =
+    sheet.kind === "brand" ? (brandsById.get(sheet.brandId) ?? null) : null;
 
   return (
     <div className="relative h-[calc(100vh-56px)] w-full overflow-hidden">
       <PannellumViewer
         rooms={rooms}
         hotspots={hotspots}
-        salleBrands={salleBrands}
-        brandsById={brandsById}
+        brands={brands}
+        activeBrandId={activeBrandId}
+        activeBrandPieces={activeBrandPieces}
         currentRoomId={currentRoomId}
         onChangeRoom={setRoom}
         onOpenGarment={openGarment}
         onOpenBrand={openBrand}
+        onSelectBrand={setActiveBrand}
         viewerRef={viewerRef}
       />
       <HUD
@@ -170,7 +167,7 @@ function FloorViewer({ floor }: { floor: number }) {
         onClose={closeSheet}
       />
       <BrandIdentitySheet
-        brand={activeBrand}
+        brand={activeSheetBrand}
         open={sheet.kind === "brand"}
         onClose={closeSheet}
       />

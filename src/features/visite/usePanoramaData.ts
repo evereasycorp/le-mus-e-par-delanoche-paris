@@ -99,3 +99,39 @@ export function usePieces(pieceIds: string[]) {
     },
   });
 }
+
+// All published brands — used to generate corridor doors dynamically.
+export function useAllBrands() {
+  return useQuery({
+    queryKey: ["visite", "brands", "all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("brands")
+        .select("id, slug, name, bio, logo_url, rank_score, is_verified, socials, display_badges")
+        .order("rank_score", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((b: Record<string, unknown>) => ({
+        ...b,
+        socials: Array.isArray(b.socials) ? (b.socials as BrandSocial[]) : [],
+        display_badges: Array.isArray(b.display_badges) ? (b.display_badges as string[]) : [],
+      })) as BrandLite[];
+    },
+  });
+}
+
+// All pieces of one brand — used to fill mannequins + penderies in the salle template.
+export function usePiecesByBrand(brandId: string | null) {
+  return useQuery({
+    queryKey: ["visite", "pieces", "byBrand", brandId],
+    enabled: !!brandId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pieces")
+        .select("id, brand_id, name, description, price_cents, currency, photos")
+        .eq("brand_id", brandId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as PieceLite[];
+    },
+  });
+}

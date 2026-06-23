@@ -214,6 +214,21 @@
   background: rgba(244, 241, 234, 0.45);
   border-style: dashed; opacity: 0.6; cursor: default;
 }
+/* Couloir: portes des créateurs, discrètes au sol */
+.pnlm-hotspot-museum.pnlm-hotspot-door {
+  width: 36px; height: 36px;
+  background: rgba(244, 241, 234, 0.75);
+  border: 1px solid #B08D57;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 0 4px rgba(176,141,87,0.12);
+}
+.pnlm-hotspot-museum.pnlm-hotspot-door::after {
+  content: ""; display: block; width: 8px; height: 8px; margin: 13px auto;
+  border-radius: 9999px; background: #B08D57;
+}
+.pnlm-hotspot-museum.pnlm-hotspot-door:hover {
+  background: #F4F1EA;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.55), 0 0 0 8px rgba(176,141,87,0.18);
+}
 .pnlm-tooltip span {
   background: rgba(43, 34, 24, 0.92) !important;
   color: #F4F1EA !important;
