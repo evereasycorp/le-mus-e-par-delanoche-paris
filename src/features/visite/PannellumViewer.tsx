@@ -439,6 +439,12 @@ export function PannellumViewer({
       };
     }
 
+    // Applique la décoration debug à toutes les scènes construites.
+    for (const key of Object.keys(scenes)) {
+      const sc = scenes[key];
+      if (sc.hotSpots) sc.hotSpots = decorateDebug(sc.hotSpots);
+    }
+
     const firstRoom =
       rooms.find((r) => r.kind === "entrance") ??
       rooms.find((r) => r.kind === "corridor") ??
@@ -458,7 +464,7 @@ export function PannellumViewer({
       scenes,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rooms, hotspots, brands, entranceRoom, corridorRoom, salleRoom]);
+  }, [rooms, hotspots, brands, entranceRoom, corridorRoom, salleRoom, debug]);
 
   useEffect(() => {
     const el = containerRef.current;
