@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import "pannellum/build/pannellum.css";
 import "pannellum/build/pannellum.js";
