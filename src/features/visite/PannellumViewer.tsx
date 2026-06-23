@@ -208,7 +208,83 @@ export function PannellumViewer({
         zoomOut: () => viewer.setHfov(Math.min(120, viewer.getHfov() + 8)),
       };
     }
+
+    // -------- Double-click to advance --------
+    // Smallest signed angular delta between two yaws, in degrees.
+    const yawDelta = (a: number, b: number) => {
+      let d = ((a - b + 540) % 360) - 180;
+      return Math.abs(d);
+    };
+
+    const handleDblClick = (ev: MouseEvent) => {
+      const v = instanceRef.current;
+      if (!v) return;
+      const { rooms: liveRooms, brands: liveBrands } = liveRef.current;
+      const currentSlug = v.getScene?.();
+      const currentRoom = liveRooms.find((r) => (r.slug ?? r.id) === currentSlug);
+      if (!currentRoom) return;
+
+      const slugOf = (r: { slug?: string | null; id: string } | undefined) =>
+        r ? r.slug ?? r.id : undefined;
+      const entranceSlug = slugOf(entranceRoom);
+      const corridorSlug = slugOf(corridorRoom);
+      const salleSlug = slugOf(salleRoom);
+
+      // Get the yaw the user double-clicked on.
+      let clickYaw: number | null = null;
+      try {
+        const coords = v.mouseEventToCoords?.(ev);
+        if (coords) clickYaw = coords[1];
+      } catch {
+        /* fall through */
+      }
+
+      if (currentRoom.kind === "entrance") {
+        // Anywhere → go up the stairs into the corridor.
+        if (corridorSlug) v.loadScene(corridorSlug, 0, 0, 100);
+        return;
+      }
+
+      if (currentRoom.kind === "corridor") {
+        // Click in the back zone (~ yaw 180) → return to the hall.
+        if (clickYaw !== null && yawDelta(clickYaw, 180) <= BACK_HIT_HALF) {
+          if (entranceSlug) v.loadScene(entranceSlug, 0, 0, 100);
+          return;
+        }
+        // Find the closest brand door by yaw.
+        if (clickYaw !== null && liveBrands.length > 0 && salleSlug) {
+          let bestIdx = -1;
+          let bestDist = Infinity;
+          liveBrands.forEach((_, i) => {
+            const pairIndex = Math.floor(i / 2);
+            const side = i % 2 === 0 ? -1 : 1;
+            const baseYaw = DOOR_PAIR_YAWS[pairIndex] ?? 6;
+            const doorYaw = side * baseYaw;
+            const d = yawDelta(clickYaw!, doorYaw);
+            if (d < bestDist) {
+              bestDist = d;
+              bestIdx = i;
+            }
+          });
+          if (bestIdx >= 0 && bestDist <= DOOR_HIT_HALF) {
+            cbRef.current.onSelectBrand(liveBrands[bestIdx].id);
+            v.loadScene(salleSlug, 0, 0, 100);
+          }
+        }
+        return;
+      }
+
+      if (currentRoom.kind === "salle") {
+        // Anywhere → return to the corridor.
+        if (corridorSlug) v.loadScene(corridorSlug, 0, 0, 100);
+        return;
+      }
+    };
+
+    el.addEventListener("dblclick", handleDblClick);
+
     return () => {
+      el.removeEventListener("dblclick", handleDblClick);
       try {
         viewer.destroy();
       } catch {
@@ -219,6 +295,7 @@ export function PannellumViewer({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config]);
+
 
   // External room change (HUD) → tell pannellum to load that scene
   useEffect(() => {
