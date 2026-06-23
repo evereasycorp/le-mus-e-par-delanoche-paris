@@ -347,13 +347,42 @@ export function PannellumViewer({
     }
   }, [currentRoomId, rooms]);
 
+  const currentRoom = rooms.find((r) => r.id === currentRoomId);
+  const isInSalle = currentRoom?.kind === "salle";
+  const corridorSlug = corridorRoom?.slug ?? corridorRoom?.id ?? null;
+
+  const handleExitSalle = () => {
+    const v = instanceRef.current;
+    if (v && corridorSlug) {
+      try {
+        v.loadScene(corridorSlug, 0, 0, 100);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
   return (
     <div className="absolute inset-0 bg-black">
       <div ref={containerRef} className="absolute inset-0" />
+
+      {isInSalle && (
+        <button
+          type="button"
+          onClick={handleExitSalle}
+          className="absolute top-4 left-4 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-sm border border-[color:var(--gold)]/50 text-[color:var(--gold-soft)] text-[11px] tracking-[0.22em] uppercase font-sans hover:bg-black/85 hover:border-[color:var(--gold)] transition"
+          aria-label="Sortir de la salle"
+        >
+          <span aria-hidden>←</span>
+          Sortir de la salle
+        </button>
+      )}
+
       <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-black/55 backdrop-blur-sm border border-[color:var(--gold)]/30 text-[10px] tracking-[0.18em] uppercase text-[color:var(--gold-soft)] font-sans">
-        Double-cliquez pour avancer
+        {isInSalle ? "Double-cliquez pour observer" : "Double-cliquez pour avancer"}
       </div>
     </div>
   );
 }
+
 
