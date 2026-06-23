@@ -126,6 +126,11 @@ export function PannellumViewer({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<PannellumViewerInstance | null>(null);
+  const [debug, setDebug] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).has("debug");
+  });
+  const [hud, setHud] = useState({ yaw: 0, pitch: 0, hfov: DEFAULT_HFOV, scene: "" });
 
   // Démarre l'ambiance sonore au premier clic utilisateur.
   useMuseumAudio(true);
