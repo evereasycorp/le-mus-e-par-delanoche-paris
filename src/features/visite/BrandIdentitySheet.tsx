@@ -18,7 +18,6 @@ export function BrandIdentitySheet({
         <SheetHeader className="text-left">
           <div className="flex items-center gap-3">
             {brand.logo_url ? (
-              
               <img
                 src={brand.logo_url}
                 alt={brand.name}

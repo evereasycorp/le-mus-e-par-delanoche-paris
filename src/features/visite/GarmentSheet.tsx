@@ -41,7 +41,6 @@ export function GarmentSheet({
         </SheetHeader>
 
         {piece.photos && piece.photos[0] && (
-          
           <img
             src={piece.photos[0]}
             alt={piece.name}
