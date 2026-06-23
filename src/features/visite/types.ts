@@ -1,29 +1,52 @@
-export type Waypoint = {
+export type RoomKind = "corridor" | "brand_room";
+export type HotspotType = "nav" | "garmentInfo" | "brandWall";
+
+export type Room = {
   id: string;
-  position: [number, number, number];
-  locked: boolean;
-  label: string;
-  doorId?: string; // door that gates this waypoint
+  kind: RoomKind;
+  floor: number;
+  order_index: number;
+  title: string;
+  panorama_url: string;
+  brand_id: string | null;
+  next_room_id: string | null;
+  prev_room_id: string | null;
 };
 
-export type Door = {
+export type Hotspot = {
+  id: string;
+  room_id: string;
+  type: HotspotType;
+  yaw: number; // degrees, 0 = camera forward
+  pitch: number; // degrees, 0 = horizon
+  label: string | null;
+  target_room_id: string | null;
+  garment_id: string | null;
+  brand_id: string | null;
+  featured: boolean;
+  order_index: number;
+};
+
+export type BrandSocial = { platform: "instagram" | "tiktok" | "website"; url: string };
+
+export type BrandLite = {
   id: string;
   slug: string;
-  brandName: string;
-  score: number;
-  position: [number, number, number];
-  rotationY: number; // 0 = facing center; +/- PI/2 for side walls
-  side: "left" | "right";
-  opened: boolean;
-  unlocksWaypoints: string[];
+  name: string;
+  bio: string | null;
+  logo_url: string | null;
+  rank_score: number;
+  is_verified: boolean;
+  socials: BrandSocial[];
+  display_badges: string[];
 };
 
-export type Garment = {
+export type PieceLite = {
   id: string;
-  brandId: string;
-  brandName: string;
+  brand_id: string;
   name: string;
-  price: number; // cents
-  position: [number, number, number];
-  thumbnail: string;
+  description: string | null;
+  price_cents: number;
+  currency: string;
+  photos: string[] | null;
 };
