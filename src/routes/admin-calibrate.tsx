@@ -110,7 +110,10 @@ function CalibratePage() {
   if (status === "denied") {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Accès refusé. <Link to="/" className="ml-2 underline">Retour</Link>
+        Accès refusé.{" "}
+        <Link to="/" className="ml-2 underline">
+          Retour
+        </Link>
       </div>
     );
   }
@@ -138,9 +141,7 @@ function CalibratePage() {
         <label className="block text-xs uppercase tracking-wider text-[#B08D57]">Scène</label>
         <select
           value={roomId}
-          onChange={(e) =>
-            navigate({ to: "/admin-calibrate", search: { roomId: e.target.value } })
-          }
+          onChange={(e) => navigate({ to: "/admin-calibrate", search: { roomId: e.target.value } })}
           className="mt-1 w-full rounded-sm border border-[#B08D57]/40 bg-white p-2 text-sm"
         >
           <option value="">— Choisir —</option>
@@ -154,8 +155,8 @@ function CalibratePage() {
         {roomId && (
           <div className="mt-6 space-y-3">
             <p className="text-xs text-[#2b2218]/70">
-              Modifie ici les coordonnées (yaw : -180→180, pitch : -90→90) de chaque hotspot.
-              Astuce : pour repérer la position visuelle voulue, ouvre la scène dans /etage/1,
+              Modifie ici les coordonnées (yaw : -180→180, pitch : -90→90) de chaque hotspot. Astuce
+              : pour repérer la position visuelle voulue, ouvre la scène dans /etage/1,
               positionne-toi face à l'objet, puis note l'angle.
             </p>
             {draft.map((h, i) => (
@@ -178,9 +179,7 @@ function CalibratePage() {
                     value={h.yaw}
                     onChange={(e) => {
                       const v = Number(e.target.value);
-                      setDraft((d) =>
-                        d.map((x, j) => (j === i ? { ...x, yaw: v } : x)),
-                      );
+                      setDraft((d) => d.map((x, j) => (j === i ? { ...x, yaw: v } : x)));
                     }}
                     className="w-full rounded-sm border border-[#B08D57]/40 bg-white p-1"
                   />
@@ -193,9 +192,7 @@ function CalibratePage() {
                     value={h.pitch}
                     onChange={(e) => {
                       const v = Number(e.target.value);
-                      setDraft((d) =>
-                        d.map((x, j) => (j === i ? { ...x, pitch: v } : x)),
-                      );
+                      setDraft((d) => d.map((x, j) => (j === i ? { ...x, pitch: v } : x)));
                     }}
                     className="w-full rounded-sm border border-[#B08D57]/40 bg-white p-1"
                   />

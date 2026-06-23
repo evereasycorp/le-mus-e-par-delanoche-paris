@@ -61,22 +61,21 @@
   --radius: 0.25rem;
 
   /* Palette LE MUSÉE — toujours sombre, pas de mode clair */
-  --background: oklch(0.115 0.005 270);          /* #0B0B0F nuit */
-  --foreground: oklch(0.95 0.015 90);            /* marbre cream */
-  --surface: oklch(0.165 0.008 270);             /* #15151B */
-  --surface-2: oklch(0.21 0.01 270);             /* élévation */
+  --background: oklch(0.115 0.005 270); /* #0B0B0F nuit */
+  --foreground: oklch(0.95 0.015 90); /* marbre cream */
+  --surface: oklch(0.165 0.008 270); /* #15151B */
+  --surface-2: oklch(0.21 0.01 270); /* élévation */
   --card: oklch(0.165 0.008 270);
   --card-foreground: oklch(0.95 0.015 90);
   --popover: oklch(0.165 0.008 270);
   --popover-foreground: oklch(0.95 0.015 90);
 
-  --gold: oklch(0.755 0.11 84);                  /* #C9A961 or */
-  --gold-soft: oklch(0.88 0.06 92);              /* #E8D9A8 or pâle */
-  --marble: oklch(0.95 0.015 90);                /* #F5F1E8 marbre */
-  --cream: oklch(0.975 0.012 88);                /* fond clair page d'accueil */
-  --ink: oklch(0.18 0.012 70);                   /* texte sombre sur cream */
-  --ink-soft: oklch(0.42 0.015 70);              /* texte secondaire sur cream */
-
+  --gold: oklch(0.755 0.11 84); /* #C9A961 or */
+  --gold-soft: oklch(0.88 0.06 92); /* #E8D9A8 or pâle */
+  --marble: oklch(0.95 0.015 90); /* #F5F1E8 marbre */
+  --cream: oklch(0.975 0.012 88); /* fond clair page d'accueil */
+  --ink: oklch(0.18 0.012 70); /* texte sombre sur cream */
+  --ink-soft: oklch(0.42 0.015 70); /* texte secondaire sur cream */
 
   --primary: var(--gold);
   --primary-foreground: oklch(0.12 0.005 270);
@@ -95,9 +94,12 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
+  * {
+    border-color: var(--color-border);
+  }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
@@ -113,21 +115,44 @@
     min-height: 100vh;
   }
 
-  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.005em; }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: 0.005em;
+  }
 
-  ::selection { background: var(--gold); color: var(--primary-foreground); }
+  ::selection {
+    background: var(--gold);
+    color: var(--primary-foreground);
+  }
 }
 
 @layer utilities {
-  .font-display { font-family: var(--font-display); }
-  .font-sans { font-family: var(--font-sans); }
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-sans {
+    font-family: var(--font-sans);
+  }
 
-  .text-gold { color: var(--gold); }
-  .text-gold-soft { color: var(--gold-soft); }
-  .bg-gold { background-color: var(--gold); }
+  .text-gold {
+    color: var(--gold);
+  }
+  .text-gold-soft {
+    color: var(--gold-soft);
+  }
+  .bg-gold {
+    background-color: var(--gold);
+  }
 
-  .tracking-museum { letter-spacing: 0.32em; }
-  .tracking-room { letter-spacing: 0.18em; }
+  .tracking-museum {
+    letter-spacing: 0.32em;
+  }
+  .tracking-room {
+    letter-spacing: 0.18em;
+  }
 
   /* Filets dorés — utilisés partout pour le code visuel "musée" */
   .gold-rule {
@@ -151,12 +176,23 @@
   .gold-frame::after {
     content: "";
     position: absolute;
-    width: 14px; height: 14px;
+    width: 14px;
+    height: 14px;
     border: 1px solid var(--gold);
     opacity: 0.65;
   }
-  .gold-frame::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
-  .gold-frame::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+  .gold-frame::before {
+    top: -1px;
+    left: -1px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+  .gold-frame::after {
+    bottom: -1px;
+    right: -1px;
+    border-left: 0;
+    border-top: 0;
+  }
 
   .vignette {
     box-shadow:
@@ -168,8 +204,14 @@
     animation: fade-up 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
   @keyframes fade-up {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .shimmer-gold {
@@ -186,32 +228,48 @@
     animation: shimmer 6s linear infinite;
   }
   @keyframes shimmer {
-    to { background-position: -200% 0; }
+    to {
+      background-position: -200% 0;
+    }
   }
-
 }
 
 /* ---------- Pannellum 360° viewer overrides ---------- */
-.pnlm-container { background: #0d0a07 !important; }
-.pnlm-load-box, .pnlm-about-msg { display: none !important; }
+.pnlm-container {
+  background: #0d0a07 !important;
+}
+.pnlm-load-box,
+.pnlm-about-msg {
+  display: none !important;
+}
 
 .pnlm-hotspot-museum {
-  width: 44px; height: 44px; border-radius: 9999px;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
   background: rgba(244, 241, 234, 0.92);
-  border: 1.5px solid #B08D57;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  border: 1.5px solid #b08d57;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  transition: transform 160ms ease, background 160ms ease;
+  transition:
+    transform 160ms ease,
+    background 160ms ease;
 }
-.pnlm-hotspot-museum:hover { transform: scale(1.08); background: #F4F1EA; }
+.pnlm-hotspot-museum:hover {
+  transform: scale(1.08);
+  background: #f4f1ea;
+}
 
 /* Navigation = floor arrows (single click) — disques très discrets */
 .pnlm-hotspot-museum.pnlm-hotspot-arrow {
-  width: 40px; height: 40px;
-  background: radial-gradient(ellipse at center,
-              rgba(244, 241, 234, 0.68) 0%,
-              rgba(201, 169, 97, 0.38) 55%,
-              rgba(201, 169, 97, 0) 80%);
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(244, 241, 234, 0.68) 0%,
+    rgba(201, 169, 97, 0.38) 55%,
+    rgba(201, 169, 97, 0) 80%
+  );
   border: none;
   box-shadow: 0 0 24px rgba(201, 169, 97, 0.15);
   transform: perspective(220px) rotateX(62deg);
@@ -232,41 +290,58 @@
 }
 .pnlm-hotspot-museum.pnlm-hotspot-arrow.pnlm-hotspot-forward,
 .pnlm-hotspot-museum.pnlm-hotspot-arrow.pnlm-hotspot-stair {
-  width: 50px; height: 50px;
-  background: radial-gradient(ellipse at center,
-              rgba(244, 241, 234, 0.85) 0%,
-              rgba(201, 169, 97, 0.55) 50%,
-              rgba(201, 169, 97, 0) 80%);
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(244, 241, 234, 0.85) 0%,
+    rgba(201, 169, 97, 0.55) 50%,
+    rgba(201, 169, 97, 0) 80%
+  );
   box-shadow: 0 0 32px rgba(201, 169, 97, 0.25);
 }
 .pnlm-hotspot-museum.pnlm-hotspot-arrow.pnlm-hotspot-door {
-  width: 44px; height: 44px;
-  background: radial-gradient(ellipse at center,
-              rgba(244, 241, 234, 0.82) 0%,
-              rgba(201, 169, 97, 0.5) 55%,
-              rgba(201, 169, 97, 0) 80%);
+  width: 44px;
+  height: 44px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(244, 241, 234, 0.82) 0%,
+    rgba(201, 169, 97, 0.5) 55%,
+    rgba(201, 169, 97, 0) 80%
+  );
 }
 .pnlm-hotspot-museum.pnlm-hotspot-arrow:hover {
   transform: perspective(220px) rotateX(62deg) scale(1.16);
-  background: radial-gradient(ellipse at center,
-              rgba(244, 241, 234, 0.95) 0%,
-              rgba(201, 169, 97, 0.7) 55%,
-              rgba(201, 169, 97, 0) 80%);
-  transition: transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1),
-              background 240ms ease;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(244, 241, 234, 0.95) 0%,
+    rgba(201, 169, 97, 0.7) 55%,
+    rgba(201, 169, 97, 0) 80%
+  );
+  transition:
+    transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    background 240ms ease;
 }
 @keyframes arrow-pulse {
-  0%, 100% { opacity: 0.65; }
-  50% { opacity: 0.92; }
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 0.92;
+  }
 }
 
 /* Médaillon "Le Sceau" — œuvre centrale, signature patrimoniale */
 .pnlm-hotspot-museum.pnlm-hotspot-monogram {
-  width: 48px; height: 48px;
-  background: radial-gradient(circle at 35% 30%,
-              rgba(232, 217, 168, 0.95) 0%,
-              rgba(201, 169, 97, 0.85) 45%,
-              rgba(120, 90, 45, 0.7) 100%);
+  width: 48px;
+  height: 48px;
+  background: radial-gradient(
+    circle at 35% 30%,
+    rgba(232, 217, 168, 0.95) 0%,
+    rgba(201, 169, 97, 0.85) 45%,
+    rgba(120, 90, 45, 0.7) 100%
+  );
   border: 1px solid rgba(232, 217, 168, 0.55);
   box-shadow:
     0 0 28px rgba(201, 169, 97, 0.45),
@@ -276,10 +351,14 @@
 }
 .pnlm-hotspot-museum.pnlm-hotspot-monogram::after {
   content: "D";
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: "Cormorant Garamond", serif;
-  font-size: 24px; font-weight: 600;
+  font-size: 24px;
+  font-weight: 600;
   color: #2b1f10;
   letter-spacing: 0;
 }
@@ -288,23 +367,36 @@
   transition: transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 @keyframes monogram-pulse {
-  0%, 100% { box-shadow: 0 0 28px rgba(201, 169, 97, 0.4), inset 0 0 8px rgba(60,40,15,0.45); }
-  50%      { box-shadow: 0 0 42px rgba(201, 169, 97, 0.7), inset 0 0 8px rgba(60,40,15,0.45); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 28px rgba(201, 169, 97, 0.4),
+      inset 0 0 8px rgba(60, 40, 15, 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 42px rgba(201, 169, 97, 0.7),
+      inset 0 0 8px rgba(60, 40, 15, 0.45);
+  }
 }
 
 /* Hotspots "à venir" — Art / Littérature : plaque dorée discrète */
 .pnlm-hotspot-museum.pnlm-hotspot-soon {
-  width: 36px; height: 36px;
+  width: 36px;
+  height: 36px;
   background: rgba(20, 16, 10, 0.55);
   border: 1px solid rgba(201, 169, 97, 0.55);
   backdrop-filter: blur(4px);
-  box-shadow: 0 2px 14px rgba(0,0,0,0.4), 0 0 18px rgba(201, 169, 97, 0.18);
+  box-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(201, 169, 97, 0.18);
   opacity: 0.85;
   animation: soon-pulse 3.6s ease-in-out infinite;
 }
 .pnlm-hotspot-museum.pnlm-hotspot-soon::after {
   content: "";
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C9A961' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>");
   background-repeat: no-repeat;
   background-position: center;
@@ -314,35 +406,57 @@
   opacity: 1;
   border-color: rgba(201, 169, 97, 0.95);
   background: rgba(20, 16, 10, 0.75);
-  transition: opacity 240ms ease, border-color 240ms ease, background 240ms ease;
+  transition:
+    opacity 240ms ease,
+    border-color 240ms ease,
+    background 240ms ease;
 }
 @keyframes soon-pulse {
-  0%, 100% { opacity: 0.7; }
-  50%      { opacity: 0.95; }
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.95;
+  }
 }
 
-.pnlm-hotspot-museum.pnlm-hotspot-garment { background: rgba(176, 141, 87, 0.85); }
+.pnlm-hotspot-museum.pnlm-hotspot-garment {
+  background: rgba(176, 141, 87, 0.85);
+}
 .pnlm-hotspot-museum.pnlm-hotspot-garment::after {
-  content: "·"; display: block; text-align: center; line-height: 40px;
-  font-size: 28px; color: #F4F1EA;
+  content: "·";
+  display: block;
+  text-align: center;
+  line-height: 40px;
+  font-size: 28px;
+  color: #f4f1ea;
 }
 .pnlm-hotspot-museum.pnlm-hotspot-wall::after {
-  content: "M"; display: block; text-align: center; line-height: 40px;
-  font-family: "Cormorant Garamond", serif; font-size: 20px; color: #2b2218;
+  content: "M";
+  display: block;
+  text-align: center;
+  line-height: 40px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 20px;
+  color: #2b2218;
 }
 .pnlm-hotspot-museum.pnlm-hotspot-empty {
   background: rgba(244, 241, 234, 0.45);
-  border-style: dashed; opacity: 0.6; cursor: default;
+  border-style: dashed;
+  opacity: 0.6;
+  cursor: default;
 }
 
 .pnlm-tooltip span {
   background: rgba(43, 34, 24, 0.92) !important;
-  color: #F4F1EA !important;
+  color: #f4f1ea !important;
   font-family: "Inter", system-ui, sans-serif !important;
-  font-size: 11px !important; letter-spacing: 0.04em;
-  border-radius: 2px !important; padding: 4px 8px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.04em;
+  border-radius: 2px !important;
+  padding: 4px 8px !important;
 }
-
 
 /* ===== Mode diagnostic : étiquettes yaw/pitch sur les hotspots de navigation ===== */
 .pnlm-hotspot.pnlm-hotspot-debug-label {
@@ -362,5 +476,6 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 .pnlm-hotspot.pnlm-hotspot-debug-label::before,
-.pnlm-hotspot.pnlm-hotspot-debug-label::after { content: none !important; }
-
+.pnlm-hotspot.pnlm-hotspot-debug-label::after {
+  content: none !important;
+}

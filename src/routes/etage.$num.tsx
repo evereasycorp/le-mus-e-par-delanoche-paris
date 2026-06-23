@@ -10,10 +10,7 @@ import {
   useAllBrands,
   usePiecesByBrand,
 } from "@/features/visite/usePanoramaData";
-import {
-  PannellumViewer,
-  type PannellumViewerHandle,
-} from "@/features/visite/PannellumViewer";
+import { PannellumViewer, type PannellumViewerHandle } from "@/features/visite/PannellumViewer";
 import { HUD } from "@/features/visite/HUD";
 import { GarmentSheet } from "@/features/visite/GarmentSheet";
 import { BrandIdentitySheet } from "@/features/visite/BrandIdentitySheet";
@@ -134,10 +131,8 @@ function FloorViewer({ floor }: { floor: number }) {
 
   const viewerRef = useRef<PannellumViewerHandle | null>(null);
 
-  const activeGarment =
-    sheet.kind === "garment" ? (piecesById.get(sheet.garmentId) ?? null) : null;
-  const activeSheetBrand =
-    sheet.kind === "brand" ? (brandsById.get(sheet.brandId) ?? null) : null;
+  const activeGarment = sheet.kind === "garment" ? (piecesById.get(sheet.garmentId) ?? null) : null;
+  const activeSheetBrand = sheet.kind === "brand" ? (brandsById.get(sheet.brandId) ?? null) : null;
 
   return (
     <div className="relative h-[calc(100vh-56px)] w-full overflow-hidden">
@@ -161,11 +156,7 @@ function FloorViewer({ floor }: { floor: number }) {
         onZoomIn={() => viewerRef.current?.zoomIn()}
         onZoomOut={() => viewerRef.current?.zoomOut()}
       />
-      <GarmentSheet
-        piece={activeGarment}
-        open={sheet.kind === "garment"}
-        onClose={closeSheet}
-      />
+      <GarmentSheet piece={activeGarment} open={sheet.kind === "garment"} onClose={closeSheet} />
       <BrandIdentitySheet
         brand={activeSheetBrand}
         open={sheet.kind === "brand"}

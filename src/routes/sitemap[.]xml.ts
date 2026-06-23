@@ -11,11 +11,13 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/etage/1", changefreq: "daily", priority: "0.9" },
         ];
-        const urls = entries.map((e) => `  <url>
+        const urls = entries.map(
+          (e) => `  <url>
     <loc>${BASE_URL}${e.path}</loc>
     <changefreq>${e.changefreq}</changefreq>
     <priority>${e.priority}</priority>
-  </url>`);
+  </url>`,
+        );
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join("\n")}

@@ -23,7 +23,9 @@ let ambientStarted = false;
 function ensureContext(): AudioBundle | null {
   if (shared) return shared;
   if (typeof window === "undefined") return null;
-  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const Ctx =
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctx) return null;
   const ctx = new Ctx();
 
@@ -64,12 +66,14 @@ function startAmbient(bundle: AudioBundle) {
   // --- Pink noise via filtered white noise ---
   const noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
   const data = noiseBuf.getChannelData(0);
-  let b0 = 0, b1 = 0, b2 = 0;
+  let b0 = 0,
+    b1 = 0,
+    b2 = 0;
   for (let i = 0; i < data.length; i++) {
     const white = Math.random() * 2 - 1;
     b0 = 0.99765 * b0 + white * 0.099046;
-    b1 = 0.96300 * b1 + white * 0.299574;
-    b2 = 0.57000 * b2 + white * 1.0792;
+    b1 = 0.963 * b1 + white * 0.299574;
+    b2 = 0.57 * b2 + white * 1.0792;
     data[i] = (b0 + b1 + b2 + white * 0.1848) * 0.11;
   }
   const noise = ctx.createBufferSource();

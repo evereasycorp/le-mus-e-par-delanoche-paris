@@ -18,7 +18,6 @@ export function BrandIdentitySheet({
         <SheetHeader className="text-left">
           <div className="flex items-center gap-3">
             {brand.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={brand.logo_url}
                 alt={brand.name}
@@ -55,7 +54,8 @@ export function BrandIdentitySheet({
         {brand.socials.length > 0 && (
           <div className="mt-4 flex gap-2">
             {brand.socials.map((s) => {
-              const Icon = s.platform === "instagram" ? Instagram : s.platform === "tiktok" ? Music2 : Globe;
+              const Icon =
+                s.platform === "instagram" ? Instagram : s.platform === "tiktok" ? Music2 : Globe;
               return (
                 <a
                   key={s.platform + s.url}
@@ -73,9 +73,7 @@ export function BrandIdentitySheet({
         )}
 
         {brand.bio && (
-          <p className="mt-5 font-serif text-sm leading-relaxed text-[#2b2218]/90">
-            {brand.bio}
-          </p>
+          <p className="mt-5 font-serif text-sm leading-relaxed text-[#2b2218]/90">{brand.bio}</p>
         )}
       </SheetContent>
     </Sheet>

@@ -7,18 +7,38 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Le Musée par Delanoche Paris — Maisons, Art & Littérature" },
-      { name: "description", content: "Un musée numérique parisien. Trois étages, trois disciplines : Vêtements, Art, Littérature. Visite immersive 360° de l'Étage 1." },
+      {
+        name: "description",
+        content:
+          "Un musée numérique parisien. Trois étages, trois disciplines : Vêtements, Art, Littérature. Visite immersive 360° de l'Étage 1.",
+      },
       { property: "og:title", content: "Le Musée par Delanoche Paris" },
-      { property: "og:description", content: "Visite immersive d'un musée parisien dédié aux maisons de couture, à l'art et à la littérature." },
+      {
+        property: "og:description",
+        content:
+          "Visite immersive d'un musée parisien dédié aux maisons de couture, à l'art et à la littérature.",
+      },
     ],
   }),
   component: Hall,
 });
 
 const FLOORS = [
-  { num: 1, label: "Vêtements", subtitle: "Maisons, ateliers & couture", href: "/etage/1", open: true },
+  {
+    num: 1,
+    label: "Vêtements",
+    subtitle: "Maisons, ateliers & couture",
+    href: "/etage/1",
+    open: true,
+  },
   { num: 2, label: "Art", subtitle: "Œuvres & galeries", href: "/etage/2", open: false },
-  { num: 3, label: "Littérature", subtitle: "Éditions & manuscrits", href: "/etage/3", open: false },
+  {
+    num: 3,
+    label: "Littérature",
+    subtitle: "Éditions & manuscrits",
+    href: "/etage/3",
+    open: false,
+  },
 ] as const;
 
 const SOCIALS = [
@@ -34,7 +54,11 @@ function Hall() {
       {/* Header clair avec logo */}
       <header className="sticky top-0 z-40 border-b border-[color:var(--gold)]/30 bg-cream/90 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-3" aria-label="Le Musée par Delanoche Paris">
+          <Link
+            to="/"
+            className="flex items-center gap-3"
+            aria-label="Le Musée par Delanoche Paris"
+          >
             <img
               src={logoMusee}
               alt="Le Musée par Delanoche Paris"
@@ -50,10 +74,16 @@ function Hall() {
             </span>
           </Link>
           <nav className="flex items-center gap-6 text-[11px] tracking-room uppercase text-ink-soft">
-            <a href="#etages" className="hidden sm:inline-block hover:text-[color:var(--gold)] transition-colors">
+            <a
+              href="#etages"
+              className="hidden sm:inline-block hover:text-[color:var(--gold)] transition-colors"
+            >
               Les étages
             </a>
-            <a href="#a-propos" className="hidden sm:inline-block hover:text-[color:var(--gold)] transition-colors">
+            <a
+              href="#a-propos"
+              className="hidden sm:inline-block hover:text-[color:var(--gold)] transition-colors"
+            >
               À propos
             </a>
             <Link
@@ -126,9 +156,21 @@ function Hall() {
       <section id="a-propos" className="border-y border-[color:var(--gold)]/20 bg-marble/60">
         <div className="mx-auto grid max-w-5xl grid-cols-1 gap-12 px-6 py-20 md:grid-cols-3">
           {[
-            { k: "01", t: "Un écrin numérique", d: "Une scénographie immersive 360° qui restitue la noblesse d'un musée parisien." },
-            { k: "02", t: "Maisons sélectionnées", d: "Des créateurs choisis avec exigence, présentés comme dans une exposition permanente." },
-            { k: "03", t: "Acquérir une œuvre", d: "Chaque pièce peut être commandée directement, dans la continuité de la visite." },
+            {
+              k: "01",
+              t: "Un écrin numérique",
+              d: "Une scénographie immersive 360° qui restitue la noblesse d'un musée parisien.",
+            },
+            {
+              k: "02",
+              t: "Maisons sélectionnées",
+              d: "Des créateurs choisis avec exigence, présentés comme dans une exposition permanente.",
+            },
+            {
+              k: "03",
+              t: "Acquérir une œuvre",
+              d: "Chaque pièce peut être commandée directement, dans la continuité de la visite.",
+            },
           ].map((b) => (
             <div key={b.k}>
               <p className="font-display text-2xl text-[color:var(--gold)]">{b.k}</p>
@@ -166,7 +208,13 @@ function Hall() {
         <div className="mx-auto max-w-6xl px-6 py-14">
           <div className="flex flex-col items-center gap-8 sm:flex-row sm:justify-between">
             <div className="flex items-center gap-4">
-              <img src={logoMusee} alt="" width={48} height={48} className="h-12 w-12 object-contain" />
+              <img
+                src={logoMusee}
+                alt=""
+                width={48}
+                height={48}
+                className="h-12 w-12 object-contain"
+              />
               <div className="leading-tight">
                 <p className="font-display text-lg text-ink">Le Musée</p>
                 <p className="text-[10px] tracking-museum uppercase text-ink-soft">
@@ -204,15 +252,27 @@ function Hall() {
 }
 
 function FloorRow({
-  num, label, subtitle, href, open,
-}: { num: number; label: string; subtitle: string; href: string; open: boolean }) {
+  num,
+  label,
+  subtitle,
+  href,
+  open,
+}: {
+  num: number;
+  label: string;
+  subtitle: string;
+  href: string;
+  open: boolean;
+}) {
   const content = (
     <div className="group relative flex items-center gap-6 overflow-hidden border border-[color:var(--gold)]/25 bg-cream px-6 py-7 transition-all hover:border-[color:var(--gold)] hover:shadow-[0_20px_50px_-25px_rgba(120,90,40,0.25)] sm:px-10 sm:py-8">
       <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-[color:var(--gold)]/50 font-display text-3xl text-[color:var(--gold)]">
         {num}
       </div>
       <div className="flex-1">
-        <p className="text-[10px] tracking-museum uppercase text-[color:var(--gold)]/80">Étage {num}</p>
+        <p className="text-[10px] tracking-museum uppercase text-[color:var(--gold)]/80">
+          Étage {num}
+        </p>
         <h3 className="mt-1 font-display text-2xl text-ink">{label}</h3>
         <p className="text-xs text-ink-soft">{subtitle}</p>
       </div>
@@ -221,16 +281,18 @@ function FloorRow({
       ) : (
         <div className="flex flex-col items-end text-right">
           <Lock className="h-4 w-4 text-ink-soft" />
-          <span className="mt-1 text-[9px] tracking-room uppercase text-ink-soft">
-            Bientôt
-          </span>
+          <span className="mt-1 text-[9px] tracking-room uppercase text-ink-soft">Bientôt</span>
         </div>
       )}
     </div>
   );
   return open ? (
-    <li><Link to={href}>{content}</Link></li>
+    <li>
+      <Link to={href}>{content}</Link>
+    </li>
   ) : (
-    <li aria-disabled className="cursor-not-allowed opacity-70">{content}</li>
+    <li aria-disabled className="cursor-not-allowed opacity-70">
+      {content}
+    </li>
   );
 }

@@ -1,6 +1,14 @@
 import {
-  ShieldCheck, Crown, Sparkles, Coins, Package,
-  Award, Star, Gem, Flame, type LucideIcon,
+  ShieldCheck,
+  Crown,
+  Sparkles,
+  Coins,
+  Package,
+  Award,
+  Star,
+  Gem,
+  Flame,
+  type LucideIcon,
 } from "lucide-react";
 
 const ICONS: Record<string, LucideIcon> = {
@@ -25,9 +33,7 @@ export function BadgePill({ badge, size = "sm" }: { badge: BrandBadge; size?: "s
   const Icon = (badge.icon && ICONS[badge.icon]) || Star;
   const isFounder = badge.slug === "founder";
   const isVerified = badge.slug === "verified";
-  const sizes = size === "md"
-    ? "h-7 px-2.5 text-[10px]"
-    : "h-5 px-2 text-[9px]";
+  const sizes = size === "md" ? "h-7 px-2.5 text-[10px]" : "h-5 px-2 text-[9px]";
   return (
     <span
       title={badge.label}
@@ -35,8 +41,8 @@ export function BadgePill({ badge, size = "sm" }: { badge: BrandBadge; size?: "s
         isFounder
           ? "border-gold/70 bg-gold/10 text-gold-soft"
           : isVerified
-          ? "border-gold/40 text-gold"
-          : "border-border text-muted-foreground"
+            ? "border-gold/40 text-gold"
+            : "border-border text-muted-foreground"
       }`}
     >
       <Icon className={size === "md" ? "h-3 w-3" : "h-2.5 w-2.5"} />
