@@ -87,6 +87,13 @@ function AdminPage() {
           <p className="text-[10px] tracking-room uppercase text-gold/80">Conservateur</p>
           <h1 className="mt-2 font-display text-4xl text-foreground">Cabinet du Musée</h1>
           <p className="mt-2 text-xs italic text-muted-foreground">{user?.email}</p>
+          <Link
+            to="/admin-calibrate"
+            search={{ roomId: "" } as never}
+            className="mt-3 inline-block rounded-sm border border-gold/50 px-3 py-1 text-[10px] uppercase tracking-room text-gold hover:bg-gold hover:text-primary-foreground"
+          >
+            Calibration hotspots 360°
+          </Link>
         </header>
 
         <nav className="mt-8 -mx-5 overflow-x-auto px-5">

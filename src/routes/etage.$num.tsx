@@ -3,9 +3,10 @@ import { useEffect } from "react";
 import { Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { MuseumHeader, PageFrame, SectionLabel } from "@/components/museum-chrome";
-import { Gallery3D } from "@/features/visite/Gallery3D";
+import { PanoramaViewer } from "@/features/visite/PanoramaViewer";
 
 export const Route = createFileRoute("/etage/$num")({
+  ssr: false,
   head: ({ params }) => ({
     meta: [
       { title: `Étage ${params.num} — Le Musée par Delanoche Paris` },
@@ -49,12 +50,17 @@ function FloorPage() {
         <PageFrame>
           <div className="mx-auto max-w-md text-center">
             <Lock className="mx-auto h-8 w-8 text-gold/70" />
-            <SectionLabel><span className="mx-auto mt-4 block">Étage {num}</span></SectionLabel>
+            <SectionLabel>
+              <span className="mx-auto mt-4 block">Étage {num}</span>
+            </SectionLabel>
             <h1 className="mt-4 font-display text-3xl text-foreground">{floor.label}</h1>
             <p className="mt-3 text-sm text-muted-foreground">
               Cet étage du Musée n'a pas encore été inauguré. Revenez le visiter prochainement.
             </p>
-            <Link to="/" className="mt-8 inline-block text-[10px] tracking-room uppercase text-gold hover:text-gold-soft">
+            <Link
+              to="/"
+              className="mt-8 inline-block text-[10px] tracking-room uppercase text-gold hover:text-gold-soft"
+            >
               ← Retour au Hall
             </Link>
           </div>
@@ -64,10 +70,9 @@ function FloorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EDE9E1]">
+    <div className="min-h-screen bg-[#0d0a07]">
       <MuseumHeader />
-      <Gallery3D floor={num} />
+      <PanoramaViewer floor={Number(num)} />
     </div>
   );
 }
-

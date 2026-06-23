@@ -81,6 +81,7 @@ export type Database = {
           collections_count: number
           cover_url: string | null
           created_at: string
+          display_badges: string[]
           followers_count: number
           history: string | null
           id: string
@@ -98,6 +99,7 @@ export type Database = {
           sales_total: number
           satisfaction_score: number
           slug: string
+          socials: Json
           tagline: string | null
           updated_at: string
           website_url: string | null
@@ -108,6 +110,7 @@ export type Database = {
           collections_count?: number
           cover_url?: string | null
           created_at?: string
+          display_badges?: string[]
           followers_count?: number
           history?: string | null
           id?: string
@@ -125,6 +128,7 @@ export type Database = {
           sales_total?: number
           satisfaction_score?: number
           slug: string
+          socials?: Json
           tagline?: string | null
           updated_at?: string
           website_url?: string | null
@@ -135,6 +139,7 @@ export type Database = {
           collections_count?: number
           cover_url?: string | null
           created_at?: string
+          display_badges?: string[]
           followers_count?: number
           history?: string | null
           id?: string
@@ -152,6 +157,7 @@ export type Database = {
           sales_total?: number
           satisfaction_score?: number
           slug?: string
+          socials?: Json
           tagline?: string | null
           updated_at?: string
           website_url?: string | null
@@ -257,6 +263,83 @@ export type Database = {
           },
         ]
       }
+      hotspots: {
+        Row: {
+          brand_id: string | null
+          created_at: string
+          featured: boolean
+          garment_id: string | null
+          id: string
+          label: string | null
+          order_index: number
+          pitch: number
+          room_id: string
+          target_room_id: string | null
+          type: string
+          updated_at: string
+          yaw: number
+        }
+        Insert: {
+          brand_id?: string | null
+          created_at?: string
+          featured?: boolean
+          garment_id?: string | null
+          id?: string
+          label?: string | null
+          order_index?: number
+          pitch?: number
+          room_id: string
+          target_room_id?: string | null
+          type: string
+          updated_at?: string
+          yaw?: number
+        }
+        Update: {
+          brand_id?: string | null
+          created_at?: string
+          featured?: boolean
+          garment_id?: string | null
+          id?: string
+          label?: string | null
+          order_index?: number
+          pitch?: number
+          room_id?: string
+          target_room_id?: string | null
+          type?: string
+          updated_at?: string
+          yaw?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotspots_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotspots_garment_id_fkey"
+            columns: ["garment_id"]
+            isOneToOne: false
+            referencedRelation: "pieces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotspots_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotspots_target_room_id_fkey"
+            columns: ["target_room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pieces: {
         Row: {
           brand_id: string
@@ -353,6 +436,73 @@ export type Database = {
         }
         Relationships: []
       }
+      rooms: {
+        Row: {
+          brand_id: string | null
+          created_at: string
+          floor: number
+          id: string
+          is_published: boolean
+          kind: string
+          next_room_id: string | null
+          order_index: number
+          panorama_url: string
+          prev_room_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          brand_id?: string | null
+          created_at?: string
+          floor?: number
+          id?: string
+          is_published?: boolean
+          kind: string
+          next_room_id?: string | null
+          order_index?: number
+          panorama_url: string
+          prev_room_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string | null
+          created_at?: string
+          floor?: number
+          id?: string
+          is_published?: boolean
+          kind?: string
+          next_room_id?: string | null
+          order_index?: number
+          panorama_url?: string
+          prev_room_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rooms_next_room_id_fkey"
+            columns: ["next_room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rooms_prev_room_id_fkey"
+            columns: ["prev_room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -386,6 +536,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      recompute_brand_scores: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role:
