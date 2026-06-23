@@ -94,7 +94,11 @@ function AuthPage() {
               <span className="mx-auto">Accès au Musée</span>
             </SectionLabel>
             <h1 className="mt-5 font-display text-3xl text-foreground">
-              {mode === "signup" ? "Demander une invitation" : mode === "reset" ? "Mot de passe oublié" : "Se présenter à l'entrée"}
+              {mode === "signup"
+                ? "Demander une invitation"
+                : mode === "reset"
+                  ? "Mot de passe oublié"
+                  : "Se présenter à l'entrée"}
             </h1>
             <p className="mt-2 text-xs text-muted-foreground">
               La visite est réservée aux visiteurs enregistrés.
@@ -135,9 +139,13 @@ function AuthPage() {
               disabled={loading}
               className="w-full rounded-sm bg-gold py-3 text-[10px] tracking-room uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {loading ? "..." :
-                mode === "signup" ? "Entrer au Musée" :
-                mode === "reset" ? "Recevoir le lien" : "Ouvrir les portes"}
+              {loading
+                ? "..."
+                : mode === "signup"
+                  ? "Entrer au Musée"
+                  : mode === "reset"
+                    ? "Recevoir le lien"
+                    : "Ouvrir les portes"}
             </button>
           </form>
 
@@ -145,7 +153,8 @@ function AuthPage() {
             {mode === "signin" ? (
               <>
                 <button onClick={() => setMode("signup")} className="hover:text-gold">
-                  Pas encore visiteur ? <span className="text-gold-soft">Demander une invitation</span>
+                  Pas encore visiteur ?{" "}
+                  <span className="text-gold-soft">Demander une invitation</span>
                 </button>
                 <button onClick={() => setMode("reset")} className="hover:text-gold">
                   Mot de passe oublié
@@ -156,7 +165,10 @@ function AuthPage() {
                 Retour à la connexion
               </button>
             )}
-            <Link to="/" className="mt-3 text-[10px] tracking-room uppercase text-muted-foreground hover:text-foreground">
+            <Link
+              to="/"
+              className="mt-3 text-[10px] tracking-room uppercase text-muted-foreground hover:text-foreground"
+            >
               ← Retour au Hall
             </Link>
           </div>
@@ -167,10 +179,19 @@ function AuthPage() {
 }
 
 function Field({
-  label, value, onChange, type = "text", placeholder, autoComplete,
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  autoComplete,
 }: {
-  label: string; value: string; onChange: (v: string) => void;
-  type?: string; placeholder?: string; autoComplete?: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  autoComplete?: string;
 }) {
   return (
     <label className="block">

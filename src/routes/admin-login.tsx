@@ -1,19 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  DEV_ADMIN_EMAIL,
-  DEV_ADMIN_PASSWORD,
-  ensureDevAdmin,
-} from "@/lib/dev-admin.functions";
+import { DEV_ADMIN_EMAIL, DEV_ADMIN_PASSWORD, ensureDevAdmin } from "@/lib/dev-admin.functions";
 
 export const Route = createFileRoute("/admin-login")({
   ssr: false,
   head: () => ({
-    meta: [
-      { title: "Admin — connexion" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "Admin — connexion" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   component: AdminLoginPage,
 });
@@ -50,10 +43,7 @@ function AdminLoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-6">
-      <form
-        onSubmit={handleSubmit}
-        className="gold-frame w-full max-w-sm space-y-6 p-8"
-      >
+      <form onSubmit={handleSubmit} className="gold-frame w-full max-w-sm space-y-6 p-8">
         <header className="text-center space-y-2">
           <p className="text-[10px] tracking-museum uppercase text-gold/80">Dev</p>
           <h1 className="font-display text-2xl text-foreground">Connexion admin</h1>
@@ -87,9 +77,7 @@ function AdminLoginPage() {
           />
         </label>
 
-        {error ? (
-          <p className="text-xs text-red-400">{error}</p>
-        ) : null}
+        {error ? <p className="text-xs text-red-400">{error}</p> : null}
 
         <button
           type="submit"

@@ -38,7 +38,12 @@ type PannellumScene = {
 
 type PannellumViewerInstance = {
   destroy: () => void;
-  loadScene: (id: string, pitch?: number | "same", yaw?: number | "same", hfov?: number | "same") => void;
+  loadScene: (
+    id: string,
+    pitch?: number | "same",
+    yaw?: number | "same",
+    hfov?: number | "same",
+  ) => void;
   setHfov: (n: number) => void;
   getHfov: () => number;
   getYaw?: () => number;
@@ -146,7 +151,12 @@ export function PannellumViewer({
   const corridorRoom = useMemo(() => rooms.find((r) => r.kind === "corridor"), [rooms]);
 
   // Transition cinématographique : dolly-zoom + fade + petit pas sonore.
-  const goToScene = (sceneId: string, targetYaw = 0, targetPitch = 0, targetHfov = DEFAULT_HFOV) => {
+  const goToScene = (
+    sceneId: string,
+    targetYaw = 0,
+    targetPitch = 0,
+    targetHfov = DEFAULT_HFOV,
+  ) => {
     const v = instanceRef.current;
     if (!v) return;
     playFootstep();
@@ -159,11 +169,19 @@ export function PannellumViewer({
       if (!v2) return;
       const t = Math.min(1, (now - t0) / duration);
       const e = 1 - Math.pow(1 - t, 3);
-      try { v2.setHfov(startHfov + (endHfov - startHfov) * e); } catch { /* ignore */ }
+      try {
+        v2.setHfov(startHfov + (endHfov - startHfov) * e);
+      } catch {
+        /* ignore */
+      }
       if (t < 1) {
         requestAnimationFrame(step);
       } else {
-        try { v2.loadScene(sceneId, targetPitch, targetYaw, targetHfov); } catch { /* ignore */ }
+        try {
+          v2.loadScene(sceneId, targetPitch, targetYaw, targetHfov);
+        } catch {
+          /* ignore */
+        }
       }
     };
     requestAnimationFrame(step);
@@ -188,7 +206,7 @@ export function PannellumViewer({
     if (rooms.length === 0) return null;
     const scenes: Record<string, PannellumScene> = {};
 
-    const slugOf = (r: Room | undefined) => (r ? r.slug ?? r.id : undefined);
+    const slugOf = (r: Room | undefined) => (r ? (r.slug ?? r.id) : undefined);
     const entranceSlug = slugOf(entranceRoom);
     const corridorSlug = slugOf(corridorRoom);
     const salleSlug = slugOf(salleRoom);
@@ -477,8 +495,8 @@ export function PannellumViewer({
         sceneId === LANDING_SCENE_ID
           ? (entranceRoom?.slug ?? entranceRoom?.id ?? sceneId)
           : sceneId === CORRIDOR_DEEP_ID
-          ? (corridorRoom?.slug ?? corridorRoom?.id ?? sceneId)
-          : sceneId;
+            ? (corridorRoom?.slug ?? corridorRoom?.id ?? sceneId)
+            : sceneId;
       const room = rooms.find((r) => (r.slug ?? r.id) === resolvedId);
       if (room) cbRef.current.onChangeRoom(room.id);
     });
@@ -489,7 +507,11 @@ export function PannellumViewer({
       };
     }
     return () => {
-      try { viewer.destroy(); } catch { /* ignore */ }
+      try {
+        viewer.destroy();
+      } catch {
+        /* ignore */
+      }
       instanceRef.current = null;
       if (viewerRef) viewerRef.current = null;
     };
@@ -503,7 +525,11 @@ export function PannellumViewer({
     const room = rooms.find((r) => r.id === currentRoomId);
     if (!room) return;
     const sceneId = room.slug ?? room.id;
-    try { viewer.loadScene(sceneId); } catch { /* ignore */ }
+    try {
+      viewer.loadScene(sceneId);
+    } catch {
+      /* ignore */
+    }
   }, [currentRoomId, rooms]);
 
   // Diagnostic : sonde la caméra à 8 Hz pour afficher yaw / pitch / hfov / scène.
@@ -519,7 +545,9 @@ export function PannellumViewer({
           hfov: v.getHfov(),
           scene: v.getScene?.() ?? "",
         });
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }, 125);
     return () => window.clearInterval(id);
   }, [debug]);
@@ -534,7 +562,12 @@ export function PannellumViewer({
 
   const copyHudCoords = () => {
     const txt = `scene: ${hud.scene} · yaw: ${hud.yaw.toFixed(2)}° · pitch: ${hud.pitch.toFixed(2)}° · hfov: ${hud.hfov.toFixed(1)}°`;
-    try { navigator.clipboard?.writeText(txt); toast("Coordonnées copiées", { duration: 1500 }); } catch { /* ignore */ }
+    try {
+      navigator.clipboard?.writeText(txt);
+      toast("Coordonnées copiées", { duration: 1500 });
+    } catch {
+      /* ignore */
+    }
   };
 
   return (
@@ -587,10 +620,18 @@ export function PannellumViewer({
             title="Cliquer pour copier les coordonnées"
           >
             <div className="opacity-60 text-[8px] uppercase tracking-[0.24em] mb-1">Diagnostic</div>
-            <div>scene&nbsp;: <span className="text-white/90">{hud.scene || "—"}</span></div>
-            <div>yaw&nbsp;&nbsp;&nbsp;: <span className="text-white/90">{hud.yaw.toFixed(2)}°</span></div>
-            <div>pitch&nbsp;: <span className="text-white/90">{hud.pitch.toFixed(2)}°</span></div>
-            <div>hfov&nbsp;&nbsp;: <span className="text-white/90">{hud.hfov.toFixed(1)}°</span></div>
+            <div>
+              scene&nbsp;: <span className="text-white/90">{hud.scene || "—"}</span>
+            </div>
+            <div>
+              yaw&nbsp;&nbsp;&nbsp;: <span className="text-white/90">{hud.yaw.toFixed(2)}°</span>
+            </div>
+            <div>
+              pitch&nbsp;: <span className="text-white/90">{hud.pitch.toFixed(2)}°</span>
+            </div>
+            <div>
+              hfov&nbsp;&nbsp;: <span className="text-white/90">{hud.hfov.toFixed(1)}°</span>
+            </div>
           </button>
         </>
       )}

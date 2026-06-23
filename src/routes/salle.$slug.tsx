@@ -15,7 +15,10 @@ export const Route = createFileRoute("/salle/$slug")({
   head: ({ params }) => ({
     meta: [
       { title: `Salle — ${params.slug} — Le Musée` },
-      { name: "description", content: `Salle d'exposition de ${params.slug} au Musée par Delanoche Paris.` },
+      {
+        name: "description",
+        content: `Salle d'exposition de ${params.slug} au Musée par Delanoche Paris.`,
+      },
     ],
   }),
   component: BrandRoomPage,
@@ -35,18 +38,31 @@ function BrandRoomPage() {
 }
 
 type Brand = {
-  id: string; slug: string; name: string; tagline: string | null;
-  bio: string | null; history: string | null;
-  logo_url: string | null; cover_url: string | null;
-  website_url: string | null; instagram_handle: string | null;
-  is_verified: boolean; is_founder: boolean; level: number;
-  followers_count: number; collections_count: number;
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string | null;
+  bio: string | null;
+  history: string | null;
+  logo_url: string | null;
+  cover_url: string | null;
+  website_url: string | null;
+  instagram_handle: string | null;
+  is_verified: boolean;
+  is_founder: boolean;
+  level: number;
+  followers_count: number;
+  collections_count: number;
   joined_museum_at: string;
   brand_badges: { badge: BrandBadge }[];
 };
 
 type Entry = {
-  id: string; display_name: string; message: string; created_at: string; user_id: string;
+  id: string;
+  display_name: string;
+  message: string;
+  created_at: string;
+  user_id: string;
 };
 
 function BrandRoom({ slug }: { slug: string }) {
@@ -54,18 +70,24 @@ function BrandRoom({ slug }: { slug: string }) {
   const [tab, setTab] = useState<"wall" | "expo" | "livre">("wall");
   const qc = useQueryClient();
 
-  const { data: brand, isLoading, error } = useQuery({
+  const {
+    data: brand,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["brand", slug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("brands")
-        .select(`
+        .select(
+          `
           id, slug, name, tagline, bio, history,
           logo_url, cover_url, website_url, instagram_handle,
           is_verified, is_founder, level,
           followers_count, collections_count, joined_museum_at,
           brand_badges ( badge:badges ( slug, label, icon ) )
-        `)
+        `,
+        )
         .eq("slug", slug)
         .eq("is_published", true)
         .maybeSingle();
@@ -121,7 +143,11 @@ function BrandRoom({ slug }: { slug: string }) {
         <MuseumHeader />
         <div className="mx-auto max-w-5xl px-5 py-16 text-center">
           <p className="text-sm text-muted-foreground">Cette salle est introuvable.</p>
-          <Link to="/etage/$num" params={{ num: "1" }} className="mt-4 inline-block text-[10px] tracking-room uppercase text-gold">
+          <Link
+            to="/etage/$num"
+            params={{ num: "1" }}
+            className="mt-4 inline-block text-[10px] tracking-room uppercase text-gold"
+          >
             ← Retour au couloir
           </Link>
         </div>
@@ -156,7 +182,9 @@ function BrandRoom({ slug }: { slug: string }) {
                 brand.name.charAt(0)
               )}
             </div>
-            <SectionLabel><span className="mx-auto mt-5 block">Salle de marque</span></SectionLabel>
+            <SectionLabel>
+              <span className="mx-auto mt-5 block">Salle de marque</span>
+            </SectionLabel>
             <h1 className="mt-3 font-display text-4xl text-foreground">{brand.name}</h1>
             {brand.tagline && (
               <p className="mt-2 text-sm italic text-muted-foreground">{brand.tagline}</p>
@@ -164,7 +192,9 @@ function BrandRoom({ slug }: { slug: string }) {
 
             {badges.length > 0 && (
               <div className="mt-5 flex flex-wrap justify-center gap-1.5">
-                {badges.map((b) => <BadgePill key={b.slug} badge={b} size="md" />)}
+                {badges.map((b) => (
+                  <BadgePill key={b.slug} badge={b} size="md" />
+                ))}
               </div>
             )}
 
@@ -186,11 +216,13 @@ function BrandRoom({ slug }: { slug: string }) {
         {/* Onglets */}
         <div className="border-t border-border/60">
           <div className="mx-auto flex max-w-5xl items-center justify-center gap-1 px-5">
-            {([
-              ["wall", "Wall"],
-              ["expo", "Exposition"],
-              ["livre", "Livre d'Or"],
-            ] as const).map(([k, label]) => (
+            {(
+              [
+                ["wall", "Wall"],
+                ["expo", "Exposition"],
+                ["livre", "Livre d'Or"],
+              ] as const
+            ).map(([k, label]) => (
               <button
                 key={k}
                 onClick={() => setTab(k)}
@@ -232,7 +264,10 @@ function WallTab({ brand }: { brand: Brand }) {
       </div>
 
       <aside className="gold-frame space-y-5 p-6">
-        <Stat label="Arrivée au Musée" value={joined.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })} />
+        <Stat
+          label="Arrivée au Musée"
+          value={joined.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+        />
         <Stat label="Niveau" value={`${brand.level}`} />
         <Stat label="Collections" value={`${brand.collections_count}`} />
         <Stat label="Suivis" value={`${brand.followers_count}`} />
@@ -242,14 +277,22 @@ function WallTab({ brand }: { brand: Brand }) {
             <p className="text-[10px] tracking-room uppercase text-gold/70">Présence</p>
             <div className="mt-3 flex flex-col gap-2 text-xs">
               {brand.website_url && (
-                <a href={brand.website_url} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-gold">
+                <a
+                  href={brand.website_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-gold"
+                >
                   <Globe className="h-3 w-3" /> Site officiel
                 </a>
               )}
               {brand.instagram_handle && (
-                <a href={`https://instagram.com/${brand.instagram_handle}`} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-gold">
+                <a
+                  href={`https://instagram.com/${brand.instagram_handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-gold"
+                >
                   <Instagram className="h-3 w-3" /> @{brand.instagram_handle}
                 </a>
               )}
@@ -290,7 +333,9 @@ function ExpoTab({ brandId }: { brandId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pieces")
-        .select("id,name,description,story,photos,price_cents,currency,sizes,stock_quantity,edition_size,display_mode")
+        .select(
+          "id,name,description,story,photos,price_cents,currency,sizes,stock_quantity,edition_size,display_mode",
+        )
         .eq("brand_id", brandId)
         .eq("is_published", true)
         .order("created_at", { ascending: true });
@@ -312,7 +357,9 @@ function ExpoTab({ brandId }: { brandId: string }) {
   if (!pieces || pieces.length === 0) {
     return (
       <div className="gold-frame mx-auto max-w-md p-10 text-center fade-up">
-        <SectionLabel><span className="mx-auto">Exposition</span></SectionLabel>
+        <SectionLabel>
+          <span className="mx-auto">Exposition</span>
+        </SectionLabel>
         <p className="mt-6 font-display text-2xl text-foreground">
           Les vitrines sont en cours d'installation
         </p>
@@ -326,13 +373,17 @@ function ExpoTab({ brandId }: { brandId: string }) {
   return (
     <div className="fade-up">
       <div className="text-center">
-        <SectionLabel><span className="mx-auto">Exposition</span></SectionLabel>
+        <SectionLabel>
+          <span className="mx-auto">Exposition</span>
+        </SectionLabel>
         <h2 className="mt-3 font-display text-2xl text-foreground">
           {pieces.length} pièce{pieces.length > 1 ? "s" : ""} exposée{pieces.length > 1 ? "s" : ""}
         </h2>
       </div>
       <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {pieces.map((p) => <PieceCard key={p.id} piece={p} />)}
+        {pieces.map((p) => (
+          <PieceCard key={p.id} piece={p} />
+        ))}
       </div>
     </div>
   );
@@ -393,7 +444,10 @@ function PieceCard({ piece }: { piece: Piece }) {
         {piece.sizes.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {piece.sizes.map((s) => (
-              <span key={s} className="border border-border/60 px-2 py-0.5 text-[10px] tracking-room uppercase text-muted-foreground">
+              <span
+                key={s}
+                className="border border-border/60 px-2 py-0.5 text-[10px] tracking-room uppercase text-muted-foreground"
+              >
                 {s}
               </span>
             ))}
@@ -438,7 +492,10 @@ function GuestbookTab({ brandId }: { brandId: string }) {
   const add = useMutation({
     mutationFn: async (message: string) => {
       const { data: profile } = await supabase
-        .from("profiles").select("display_name").eq("id", user!.id).maybeSingle();
+        .from("profiles")
+        .select("display_name")
+        .eq("id", user!.id)
+        .maybeSingle();
       const displayName = profile?.display_name || user!.email?.split("@")[0] || "Visiteur";
       const { error } = await supabase.from("guestbook_entries").insert({
         brand_id: brandId,
@@ -459,15 +516,22 @@ function GuestbookTab({ brandId }: { brandId: string }) {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = entrySchema.safeParse({ message: text });
-    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message);
+      return;
+    }
     add.mutate(parsed.data.message);
   }
 
   return (
     <div className="mx-auto max-w-2xl fade-up">
       <div className="text-center">
-        <SectionLabel><span className="mx-auto">Livre d'Or</span></SectionLabel>
-        <h2 className="mt-3 font-display text-2xl text-foreground">Laissez une trace de votre passage</h2>
+        <SectionLabel>
+          <span className="mx-auto">Livre d'Or</span>
+        </SectionLabel>
+        <h2 className="mt-3 font-display text-2xl text-foreground">
+          Laissez une trace de votre passage
+        </h2>
       </div>
 
       <form onSubmit={submit} className="gold-frame mt-8 p-5">

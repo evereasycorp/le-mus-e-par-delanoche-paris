@@ -16,8 +16,12 @@ export const Route = createFileRoute("/favoris")({
 
 type Row = {
   brand: {
-    id: string; slug: string; name: string; tagline: string | null;
-    is_verified: boolean; level: number;
+    id: string;
+    slug: string;
+    name: string;
+    tagline: string | null;
+    is_verified: boolean;
+    level: number;
     brand_badges: { badge: BrandBadge }[];
   };
 };
@@ -36,12 +40,14 @@ function FavoritesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("follows")
-        .select(`
+        .select(
+          `
           brand:brands (
             id, slug, name, tagline, is_verified, level,
             brand_badges ( badge:badges ( slug, label, icon ) )
           )
-        `)
+        `,
+        )
         .eq("user_id", user!.id);
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
@@ -53,7 +59,9 @@ function FavoritesPage() {
       <MuseumHeader />
       <PageFrame>
         <div className="text-center">
-          <SectionLabel><span className="mx-auto">Votre carnet</span></SectionLabel>
+          <SectionLabel>
+            <span className="mx-auto">Votre carnet</span>
+          </SectionLabel>
           <h1 className="mt-4 font-display text-3xl text-foreground">Maisons suivies</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Vos coups de cœur, leurs badges et leurs nouveautés.
@@ -93,11 +101,15 @@ function FavoritesPage() {
                         {brand.name.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="truncate font-display text-lg text-foreground">{brand.name}</h3>
+                        <h3 className="truncate font-display text-lg text-foreground">
+                          {brand.name}
+                        </h3>
                         <p className="truncate text-xs text-muted-foreground">{brand.tagline}</p>
                         {badges.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
-                            {badges.slice(0, 3).map((b) => <BadgePill key={b.slug} badge={b} />)}
+                            {badges.slice(0, 3).map((b) => (
+                              <BadgePill key={b.slug} badge={b} />
+                            ))}
                           </div>
                         )}
                       </div>

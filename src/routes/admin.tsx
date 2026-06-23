@@ -2,7 +2,19 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, X, Trash2, Search, Award, Shield, Users, MessageSquare, Flag, BarChart3, ClipboardCheck } from "lucide-react";
+import {
+  Check,
+  X,
+  Trash2,
+  Search,
+  Award,
+  Shield,
+  Users,
+  MessageSquare,
+  Flag,
+  BarChart3,
+  ClipboardCheck,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,14 +29,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Section =
-  | "stats"
-  | "brands"
-  | "creators"
-  | "badges"
-  | "users"
-  | "guestbook"
-  | "reports";
+type Section = "stats" | "brands" | "creators" | "badges" | "users" | "guestbook" | "reports";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -65,7 +70,9 @@ function AdminPage() {
       <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-background px-6 text-center">
         <h1 className="font-serif text-3xl text-foreground">Accès réservé</h1>
         <p className="text-foreground/60 max-w-sm">Cette salle est réservée aux conservateurs.</p>
-        <Link to="/" className="gold-frame px-6 py-3 text-sm uppercase tracking-[0.2em]">Retour au Hall</Link>
+        <Link to="/" className="gold-frame px-6 py-3 text-sm uppercase tracking-[0.2em]">
+          Retour au Hall
+        </Link>
       </main>
     );
   }
@@ -106,7 +113,9 @@ function AdminPage() {
                   key={t.id}
                   onClick={() => setSection(t.id)}
                   className={`flex items-center gap-2 whitespace-nowrap px-4 py-3 text-[10px] tracking-room uppercase transition-colors ${
-                    active ? "border-b-2 border-gold text-gold" : "text-muted-foreground hover:text-foreground"
+                    active
+                      ? "border-b-2 border-gold text-gold"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -138,12 +147,18 @@ function StatsPanel() {
     queryFn: async () => {
       const [brandsAll, brandsPub, pieces, users, sales] = await Promise.all([
         supabase.from("brands").select("id", { count: "exact", head: true }),
-        supabase.from("brands").select("id", { count: "exact", head: true }).eq("is_published", true),
+        supabase
+          .from("brands")
+          .select("id", { count: "exact", head: true })
+          .eq("is_published", true),
         supabase.from("pieces").select("id", { count: "exact", head: true }),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("brands").select("sales_total"),
       ]);
-      const totalSales = (sales.data ?? []).reduce((s, r: { sales_total: number }) => s + Number(r.sales_total || 0), 0);
+      const totalSales = (sales.data ?? []).reduce(
+        (s, r: { sales_total: number }) => s + Number(r.sales_total || 0),
+        0,
+      );
       return {
         brandsAll: brandsAll.count ?? 0,
         brandsPub: brandsPub.count ?? 0,
@@ -155,13 +170,26 @@ function StatsPanel() {
   });
 
   if (isLoading || !data) {
-    return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-28 animate-pulse rounded-sm bg-surface" />)}</div>;
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-28 animate-pulse rounded-sm bg-surface" />
+        ))}
+      </div>
+    );
   }
   const cards = [
     { label: "Marques publiées", value: `${data.brandsPub} / ${data.brandsAll}` },
     { label: "Pièces exposées", value: `${data.pieces}` },
     { label: "Utilisateurs", value: `${data.users}` },
-    { label: "Ventes cumulées", value: data.totalSales.toLocaleString("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }) },
+    {
+      label: "Ventes cumulées",
+      value: data.totalSales.toLocaleString("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 0,
+      }),
+    },
   ];
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -216,7 +244,11 @@ function BrandsPanel() {
   });
 
   return (
-    <Panel title="Marques en attente de validation" empty={!isLoading && (!data || data.length === 0)} emptyText="Aucune marque en attente.">
+    <Panel
+      title="Marques en attente de validation"
+      empty={!isLoading && (!data || data.length === 0)}
+      emptyText="Aucune marque en attente."
+    >
       {data?.map((b) => (
         <Row key={b.id}>
           <div className="min-w-0 flex-1">
@@ -224,8 +256,15 @@ function BrandsPanel() {
             <p className="truncate text-xs text-muted-foreground">{b.tagline ?? b.slug}</p>
           </div>
           <div className="flex gap-2">
-            <ActionBtn onClick={() => setPublished.mutate({ id: b.id, is_published: true })} variant="ok"><Check className="h-3 w-3" /> Approuver</ActionBtn>
-            <ActionBtn onClick={() => remove.mutate(b.id)} variant="danger"><X className="h-3 w-3" /> Refuser</ActionBtn>
+            <ActionBtn
+              onClick={() => setPublished.mutate({ id: b.id, is_published: true })}
+              variant="ok"
+            >
+              <Check className="h-3 w-3" /> Approuver
+            </ActionBtn>
+            <ActionBtn onClick={() => remove.mutate(b.id)} variant="danger">
+              <X className="h-3 w-3" /> Refuser
+            </ActionBtn>
           </div>
         </Row>
       ))}
@@ -251,7 +290,10 @@ function CreatorsPanel() {
 
   const approve = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("brands").update({ is_published: true, is_verified: true }).eq("id", id);
+      const { error } = await supabase
+        .from("brands")
+        .update({ is_published: true, is_verified: true })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -263,14 +305,22 @@ function CreatorsPanel() {
   });
 
   return (
-    <Panel title="Demandes de créateurs" empty={!isLoading && (!data || data.length === 0)} emptyText="Aucune demande en attente.">
+    <Panel
+      title="Demandes de créateurs"
+      empty={!isLoading && (!data || data.length === 0)}
+      emptyText="Aucune demande en attente."
+    >
       {data?.map((b) => (
         <Row key={b.id}>
           <div className="min-w-0 flex-1">
             <p className="font-display text-lg text-foreground">{b.name}</p>
-            <p className="text-[10px] tracking-room uppercase text-muted-foreground">Propriétaire : {b.owner_id ?? "—"}</p>
+            <p className="text-[10px] tracking-room uppercase text-muted-foreground">
+              Propriétaire : {b.owner_id ?? "—"}
+            </p>
           </div>
-          <ActionBtn onClick={() => approve.mutate(b.id)} variant="ok"><Check className="h-3 w-3" /> Approuver & vérifier</ActionBtn>
+          <ActionBtn onClick={() => approve.mutate(b.id)} variant="ok">
+            <Check className="h-3 w-3" /> Approuver & vérifier
+          </ActionBtn>
         </Row>
       ))}
     </Panel>
@@ -287,7 +337,10 @@ function BadgesPanel() {
   const { data: badges } = useQuery({
     queryKey: ["admin", "badges"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("badges").select("id, slug, label, icon, description").order("label");
+      const { data, error } = await supabase
+        .from("badges")
+        .select("id, slug, label, icon, description")
+        .order("label");
       if (error) throw error;
       return data;
     },
@@ -308,7 +361,9 @@ function BadgesPanel() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setSlug(""); setLabel(""); setIcon("");
+      setSlug("");
+      setLabel("");
+      setIcon("");
       qc.invalidateQueries({ queryKey: ["admin", "badges"] });
       toast.success("Badge créé");
     },
@@ -319,7 +374,10 @@ function BadgesPanel() {
       const { error } = await supabase.from("badges").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "badges"] }); toast.success("Badge supprimé"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "badges"] });
+      toast.success("Badge supprimé");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const attribute = useMutation({
@@ -335,14 +393,35 @@ function BadgesPanel() {
     <div className="space-y-8">
       <Panel title="Créer un badge" empty={false}>
         <div className="grid gap-3 sm:grid-cols-4">
-          <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug (ex: pionnier)" className="border border-border/60 bg-transparent px-3 py-2 text-sm" />
-          <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Libellé" className="border border-border/60 bg-transparent px-3 py-2 text-sm" />
-          <input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="Icône (optionnel)" className="border border-border/60 bg-transparent px-3 py-2 text-sm" />
-          <ActionBtn onClick={() => create.mutate()} variant="ok">Créer</ActionBtn>
+          <input
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="slug (ex: pionnier)"
+            className="border border-border/60 bg-transparent px-3 py-2 text-sm"
+          />
+          <input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Libellé"
+            className="border border-border/60 bg-transparent px-3 py-2 text-sm"
+          />
+          <input
+            value={icon}
+            onChange={(e) => setIcon(e.target.value)}
+            placeholder="Icône (optionnel)"
+            className="border border-border/60 bg-transparent px-3 py-2 text-sm"
+          />
+          <ActionBtn onClick={() => create.mutate()} variant="ok">
+            Créer
+          </ActionBtn>
         </div>
       </Panel>
 
-      <Panel title={`Badges existants (${badges?.length ?? 0})`} empty={!badges || badges.length === 0} emptyText="Aucun badge.">
+      <Panel
+        title={`Badges existants (${badges?.length ?? 0})`}
+        empty={!badges || badges.length === 0}
+        emptyText="Aucun badge."
+      >
         {badges?.map((b) => (
           <Row key={b.id}>
             <div className="min-w-0 flex-1">
@@ -358,9 +437,15 @@ function BadgesPanel() {
               className="border border-border/60 bg-background px-2 py-1.5 text-xs"
             >
               <option value="">Attribuer à…</option>
-              {brands?.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
+              {brands?.map((br) => (
+                <option key={br.id} value={br.id}>
+                  {br.name}
+                </option>
+              ))}
             </select>
-            <ActionBtn onClick={() => remove.mutate(b.id)} variant="danger"><Trash2 className="h-3 w-3" /></ActionBtn>
+            <ActionBtn onClick={() => remove.mutate(b.id)} variant="danger">
+              <Trash2 className="h-3 w-3" />
+            </ActionBtn>
           </Row>
         ))}
       </Panel>
@@ -395,7 +480,10 @@ function UsersPanel() {
       const { error } = await supabase.from("profiles").update({ is_suspended }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "users"] }); toast.success("Utilisateur mis à jour"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success("Utilisateur mis à jour");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -403,28 +491,53 @@ function UsersPanel() {
     if (!data) return [];
     const needle = q.trim().toLowerCase();
     if (!needle) return data;
-    return data.filter((u) => (u.display_name ?? "").toLowerCase().includes(needle) || u.id.includes(needle));
+    return data.filter(
+      (u) => (u.display_name ?? "").toLowerCase().includes(needle) || u.id.includes(needle),
+    );
   }, [data, q]);
 
   return (
-    <Panel title={`Utilisateurs (${data?.length ?? 0})`} empty={!isLoading && filtered.length === 0} emptyText="Aucun utilisateur.">
+    <Panel
+      title={`Utilisateurs (${data?.length ?? 0})`}
+      empty={!isLoading && filtered.length === 0}
+      emptyText="Aucun utilisateur."
+    >
       <div className="mb-4 flex items-center gap-2 border border-border/60 px-3 py-2">
         <Search className="h-3.5 w-3.5 text-muted-foreground" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher par nom ou identifiant…" className="w-full bg-transparent text-sm focus:outline-none" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Rechercher par nom ou identifiant…"
+          className="w-full bg-transparent text-sm focus:outline-none"
+        />
       </div>
       {filtered.map((u) => (
         <Row key={u.id}>
           <div className="min-w-0 flex-1">
             <p className="font-display text-base text-foreground">{u.display_name ?? "—"}</p>
-            <p className="truncate text-[10px] tracking-room uppercase text-muted-foreground">{u.id}</p>
+            <p className="truncate text-[10px] tracking-room uppercase text-muted-foreground">
+              {u.id}
+            </p>
             {u.roles.length > 0 && (
-              <p className="mt-1 text-[10px] tracking-room uppercase text-gold/70">{u.roles.join(" · ")}</p>
+              <p className="mt-1 text-[10px] tracking-room uppercase text-gold/70">
+                {u.roles.join(" · ")}
+              </p>
             )}
           </div>
           {u.is_suspended ? (
-            <ActionBtn onClick={() => setSuspended.mutate({ id: u.id, is_suspended: false })} variant="ok">Réactiver</ActionBtn>
+            <ActionBtn
+              onClick={() => setSuspended.mutate({ id: u.id, is_suspended: false })}
+              variant="ok"
+            >
+              Réactiver
+            </ActionBtn>
           ) : (
-            <ActionBtn onClick={() => setSuspended.mutate({ id: u.id, is_suspended: true })} variant="danger">Suspendre</ActionBtn>
+            <ActionBtn
+              onClick={() => setSuspended.mutate({ id: u.id, is_suspended: true })}
+              variant="danger"
+            >
+              Suspendre
+            </ActionBtn>
           )}
         </Row>
       ))}
@@ -452,12 +565,19 @@ function GuestbookPanel() {
       const { error } = await supabase.from("guestbook_entries").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "guestbook"] }); toast.success("Entrée supprimée"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "guestbook"] });
+      toast.success("Entrée supprimée");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
-    <Panel title="Modération du Livre d'Or" empty={!isLoading && (!data || data.length === 0)} emptyText="Aucune entrée.">
+    <Panel
+      title="Modération du Livre d'Or"
+      empty={!isLoading && (!data || data.length === 0)}
+      emptyText="Aucune entrée."
+    >
       {data?.map((e) => (
         <Row key={e.id}>
           <div className="min-w-0 flex-1">
@@ -467,7 +587,9 @@ function GuestbookPanel() {
               {new Date(e.created_at).toLocaleString("fr-FR")} {e.is_hidden ? "· masqué" : ""}
             </p>
           </div>
-          <ActionBtn onClick={() => remove.mutate(e.id)} variant="danger"><Trash2 className="h-3 w-3" /> Supprimer</ActionBtn>
+          <ActionBtn onClick={() => remove.mutate(e.id)} variant="danger">
+            <Trash2 className="h-3 w-3" /> Supprimer
+          </ActionBtn>
         </Row>
       ))}
     </Panel>
@@ -477,21 +599,39 @@ function GuestbookPanel() {
 /* ---------- Signalements (placeholder pour V2) ---------- */
 function ReportsPanel() {
   return (
-    <Panel title="Signalements" empty={true} emptyText="Le module de signalement sera ouvert prochainement (queue, suivi, résolution). Pour l'instant, les contenus problématiques se gèrent via la modération du Livre d'Or et la suspension d'utilisateurs.">
+    <Panel
+      title="Signalements"
+      empty={true}
+      emptyText="Le module de signalement sera ouvert prochainement (queue, suivi, résolution). Pour l'instant, les contenus problématiques se gèrent via la modération du Livre d'Or et la suspension d'utilisateurs."
+    >
       {null}
     </Panel>
   );
 }
 
 /* ---------- Primitives UI ---------- */
-function Panel({ title, children, empty, emptyText }: { title: string; children: React.ReactNode; empty: boolean; emptyText?: string }) {
+function Panel({
+  title,
+  children,
+  empty,
+  emptyText,
+}: {
+  title: string;
+  children: React.ReactNode;
+  empty: boolean;
+  emptyText?: string;
+}) {
   return (
     <section>
       <h2 className="font-display text-2xl text-foreground">{title}</h2>
       <div className="mt-4 space-y-2">
         {empty ? (
-          <div className="gold-frame p-8 text-center text-sm text-muted-foreground">{emptyText ?? "Aucun élément."}</div>
-        ) : children}
+          <div className="gold-frame p-8 text-center text-sm text-muted-foreground">
+            {emptyText ?? "Aucun élément."}
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </section>
   );
@@ -499,7 +639,15 @@ function Panel({ title, children, empty, emptyText }: { title: string; children:
 function Row({ children }: { children: React.ReactNode }) {
   return <div className="gold-frame flex flex-wrap items-center gap-3 p-4">{children}</div>;
 }
-function ActionBtn({ children, onClick, variant }: { children: React.ReactNode; onClick: () => void; variant: "ok" | "danger" | "neutral" }) {
+function ActionBtn({
+  children,
+  onClick,
+  variant,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  variant: "ok" | "danger" | "neutral";
+}) {
   const cls =
     variant === "ok"
       ? "border-gold/60 text-gold hover:bg-gold hover:text-primary-foreground"
@@ -507,7 +655,10 @@ function ActionBtn({ children, onClick, variant }: { children: React.ReactNode; 
         ? "border-destructive/60 text-destructive hover:bg-destructive hover:text-destructive-foreground"
         : "border-border text-foreground hover:bg-surface";
   return (
-    <button onClick={onClick} className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[10px] tracking-room uppercase transition-colors ${cls}`}>
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[10px] tracking-room uppercase transition-colors ${cls}`}
+    >
       {children}
     </button>
   );
