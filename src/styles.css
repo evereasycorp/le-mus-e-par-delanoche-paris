@@ -205,9 +205,41 @@
 }
 .pnlm-hotspot-museum:hover { transform: scale(1.08); background: #F4F1EA; }
 
-/* Navigation is now driven by double-click on the panorama itself —
-   no on-floor disks or door hotspots are rendered. */
-
+/* Navigation = floor arrows (single click) */
+.pnlm-hotspot-museum.pnlm-hotspot-arrow {
+  width: 64px; height: 64px;
+  background: radial-gradient(ellipse at center,
+              rgba(244, 241, 234, 0.85) 0%,
+              rgba(201, 169, 97, 0.55) 55%,
+              rgba(201, 169, 97, 0) 75%);
+  border: none;
+  box-shadow: none;
+  transform: perspective(220px) rotateX(62deg);
+  animation: arrow-pulse 2.2s ease-in-out infinite;
+}
+.pnlm-hotspot-museum.pnlm-hotspot-arrow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232b2218' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5l0 14M5 12l7-7 7 7'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center 28%;
+  background-size: 26px 26px;
+}
+.pnlm-hotspot-museum.pnlm-hotspot-arrow.pnlm-hotspot-back::after {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232b2218' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M12 19l0 -14M5 12l7 7 7 -7'/></svg>");
+}
+.pnlm-hotspot-museum.pnlm-hotspot-arrow:hover {
+  transform: perspective(220px) rotateX(62deg) scale(1.12);
+  background: radial-gradient(ellipse at center,
+              rgba(244, 241, 234, 0.98) 0%,
+              rgba(201, 169, 97, 0.75) 55%,
+              rgba(201, 169, 97, 0) 80%);
+}
+@keyframes arrow-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
 
 .pnlm-hotspot-museum.pnlm-hotspot-garment { background: rgba(176, 141, 87, 0.85); }
 .pnlm-hotspot-museum.pnlm-hotspot-garment::after {
