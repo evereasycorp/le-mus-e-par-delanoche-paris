@@ -196,8 +196,8 @@ export function PannellumViewer({
   };
 
   const showMonogramInfo = () => {
-    toast("« Le Sceau » — sculpture monumentale, marbre ivoire & bronze patiné.", {
-      description: "Œuvre emblématique de la collection Delanoche Paris.",
+    toast("« Le Sceau » — fontaine de bronze patiné, médaillon ovale sculpté en relief.", {
+      description: "Pièce emblématique de la collection Delanoche Paris, au pied du grand escalier.",
       duration: 4200,
     });
   };
@@ -233,8 +233,7 @@ export function PannellumViewer({
 
       // ===== HALL D'ENTRÉE (rez-de-chaussée) =====
       if (room.kind === "entrance") {
-        // Médaillon "Le Sceau" — œuvre centrale du musée, posée au pied de
-        // l'escalier (signature patrimoniale plutôt qu'un logo publicitaire).
+        // Médaillon "Le Sceau" — fontaine de bronze, pièce centrale du musée, posée au pied de l'escalier (signature patrimoniale plutôt qu'un logo publicitaire).
         hs.push({
           type: "info",
           pitch: -18,
