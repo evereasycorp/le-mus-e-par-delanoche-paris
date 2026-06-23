@@ -165,20 +165,19 @@ export function PannellumViewer({
         }
       }
 
-      // Corridor: one door per brand, evenly spaced — supports unlimited brands.
+      // Corridor: doors paired left/right at the start of the corridor,
+      // converging into the depth — first 2 brands flank the viewer on arrival.
       if (room.kind === "corridor" && salleRoom && brands.length > 0) {
         const salleSlug = idToSlug.get(salleRoom.id) ?? salleRoom.slug ?? salleRoom.id;
-        const n = brands.length;
-        const span = CORRIDOR_YAW_MAX - CORRIDOR_YAW_MIN;
         brands.forEach((brand, i) => {
-          const yaw =
-            n === 1
-              ? 0
-              : CORRIDOR_YAW_MIN + (span * i) / (n - 1);
+          const pairIndex = Math.floor(i / 2);
+          const side = i % 2 === 0 ? -1 : 1; // even = left, odd = right
+          const baseYaw = DOOR_PAIR_YAWS[pairIndex] ?? 6;
+          const yaw = side * baseYaw;
           hs.push({
             type: "info",
             yaw,
-            pitch: DOOR_PITCH,
+            pitch: FLOOR_PITCH,
             text: brand.name,
             cssClass: "pnlm-hotspot-museum pnlm-hotspot-door",
             clickHandlerFunc: () => {
@@ -195,6 +194,7 @@ export function PannellumViewer({
           });
         });
       }
+
 
       scenes[sceneId] = {
         type: "equirectangular",
