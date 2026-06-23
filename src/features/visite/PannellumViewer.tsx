@@ -105,11 +105,15 @@ export function PannellumViewer({
   const cbRef = useRef({ onChangeRoom, onOpenGarment, onOpenBrand, onSelectBrand });
   cbRef.current = { onChangeRoom, onOpenGarment, onOpenBrand, onSelectBrand };
 
-  // Live state for the salle scene — accessed via ref so brand switches don't remount.
-  const liveRef = useRef({ activeBrandId, activeBrandPieces, brands });
-  liveRef.current = { activeBrandId, activeBrandPieces, brands };
+  // Live state — accessed via ref so brand switches or room transitions
+  // don't trigger a full viewer remount.
+  const liveRef = useRef({ activeBrandId, activeBrandPieces, brands, rooms });
+  liveRef.current = { activeBrandId, activeBrandPieces, brands, rooms };
 
   const salleRoom = useMemo(() => rooms.find((r) => r.kind === "salle"), [rooms]);
+  const entranceRoom = useMemo(() => rooms.find((r) => r.kind === "entrance"), [rooms]);
+  const corridorRoom = useMemo(() => rooms.find((r) => r.kind === "corridor"), [rooms]);
+
 
   // Build pannellum config (depends only on rooms / hotspots / brands count, not on activeBrand)
   const config = useMemo(() => {
