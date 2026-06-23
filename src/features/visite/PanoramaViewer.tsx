@@ -41,7 +41,28 @@ export function PanoramaViewer({ floor }: { floor: number }) {
     [rooms, currentRoomId],
   );
 
-  const { data: hotspots = [] } = useHotspots(currentRoomId);
+  const { data: rawHotspots = [] } = useHotspots(currentRoomId);
+  // Garde défensive : on n'affiche jamais un hotspot orphelin (garment_id null, brand_id null)
+  const hotspots = useMemo(
+    () =>
+      rawHotspots.filter((h) => {
+        if (h.type === "garmentInfo") return !!h.garment_id;
+        if (h.type === "brandWall") return !!h.brand_id;
+        if (h.type === "nav") return !!h.target_room_id;
+        return true;
+      }),
+    [rawHotspots],
+  );
+
+  // À chaque changement de salle, oriente la caméra vers le premier hotspot nav visible
+  // pour qu'un point de navigation soit immédiatement à l'écran.
+  useEffect(() => {
+    if (!currentRoomId || hotspots.length === 0) return;
+    const nav = hotspots.find((h) => h.type === "nav");
+    const target = nav ?? hotspots[0];
+    useVisiteStore.getState().setOrientation((target.yaw * Math.PI) / 180, 0);
+  }, [currentRoomId, hotspots]);
+
   const brandIds = useMemo(
     () => Array.from(new Set(hotspots.map((h) => h.brand_id).filter(Boolean) as string[])),
     [hotspots],
