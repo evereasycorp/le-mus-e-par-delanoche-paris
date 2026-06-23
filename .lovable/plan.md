@@ -1,64 +1,95 @@
-# Refonte Visite 360° — Panoramas equirectangulaires
+# Refonte 360° — Moteur Pannellum + structure entrée/couloir/salles
 
-## Stack technique
-- **Viewer** : Three.js sphère inversée + texture equirectangulaire (pas de Pannellum, on garde notre contrôle complet sur inertie/hotspots/zoom). On réutilise `three` et `@react-three/fiber` déjà installés.
-- **Hotspots** : projection yaw/pitch → coordonnées écran via `Vector3.project(camera)`, rendus en HTML overlay (zones 44×44 garanties, regroupement auto).
-- **Data** : tables Supabase `rooms`, `hotspots`, extension de `brands` (bio, socials, badges, logo_url, score).
+## Objectif
 
-## Étapes
+Abandonner la projection maison (yaw/pitch calculés à la main, hotspots HTML overlay) qui a généré bug sur bug. Basculer sur **Pannellum** (MIT, mature, scènes multiples natives) et restructurer le parcours en `entree-escalier → couloir-etage-1 → salle-N` (6 marques max par salle, pas 1 marque par salle comme aujourd'hui).
 
-### 1. Base de données
-Migration ajoutant :
-- `rooms` (id, kind: 'corridor'|'brand_room', floor, order_index, panorama_url, brand_id?, next_room_id?)
-- `hotspots` (id, room_id, type: 'nav'|'garmentInfo'|'brandWall', yaw, pitch, target_room_id?, garment_id?, brand_id?)
-- `brands` : ajout colonnes `bio`, `socials jsonb`, `badges text[]`, `logo_url`, `score` (calculé 50% ventes / 30% satisfaction / 20% activité — fonction SQL `recompute_brand_scores()` + comment indiquant le cron à venir).
-- Seed : 1 couloir + 3 salles de marque chaînées avec 4-6 marques.
-- GRANT + RLS publiques en lecture, écriture admin only.
+## 1. Moteur : Pannellum
 
-### 2. Placeholders panoramas 360°
-- Génération d'1 image equirectangulaire 2048×1024 pour le couloir Louvre (pierre claire, voûte en berceau, vitrines ouvertes sur les côtés, sol lignes laiton).
-- Génération d'1 image equirectangulaire 2048×1024 pour salle de marque (cintres murs G/D, 3 mannequins centre, mur d'identité au fond).
-- Upload via `lovable-assets`.
+- `bun add pannellum` (lib vanilla — pas de wrapper React maintenu fiable).
+- Nouveau composant `PannellumViewer.tsx` : div conteneur + ref, instancie `pannellum.viewer(el, config)` au mount, `viewer.destroy()` au unmount (libère le contexte WebGL — résout les fuites entre routes).
+- Config Pannellum : `default.sceneFadeDuration: 600`, `autoLoad: true`, `showControls: false` (on garde notre HUD), `mouseZoom: true`, `friction: 0.15` (inertie native).
+- Hotspots déclarés dans le config Pannellum :
+  - `type: "scene"` + `sceneId` → navigation inter-scène **gérée nativement** (plus de `goToRoom` custom, plus de calcul d'orientation initiale).
+  - `type: "info"` + `clickHandlerFunc` → ouvre nos sheets (`GarmentSheet`, `BrandIdentitySheet`).
+- CSS override dans `src/styles.css` : ré-habiller les hotspots Pannellum (`.pnlm-hotspot`) avec nos couleurs/typo existantes.
 
-### 3. Viewer Panorama (`src/features/visite/`)
-- `PanoramaViewer.tsx` : Canvas r3f, sphère inversée, texture chargée avec preload de la scène suivante (TextureLoader cache).
-- `CameraController.tsx` : drag-look avec **inertie ease-out 400ms** sur release, FOV zoom, distinction tap (<8px) vs drag.
-- `HotspotLayer.tsx` : projection yaw/pitch→écran, zones touch 44×44, **regroupement <30px en badge "+N"**, désactivation pointer-events quand bottom-sheet ouverte.
-- `store.ts` (zustand) : `currentRoomId`, `isSheetOpen` (verrouille contrôles), `cameraYaw`, `cameraPitch`, `fov`.
-- Transitions entre rooms : fade noir→nouveau panorama, easing cubic 600ms.
+## 2. Structure de données (migration DB)
 
-### 4. HUD
-- Flèches Next/Prev (état désactivé en bord de chaîne).
-- Filmstrip vignettes des rooms (verrouillées grisées).
-- Zoom +/−, plein écran (Fullscreen API).
-- Cartel marque sticky en bas dans le couloir (nom + score).
+Le modèle actuel = 1 brand_room par marque. Le nouveau modèle = 1 `salle` regroupe jusqu'à 6 marques (chacune avec sa zone cintres/mannequins/wall dans la même scène 360).
 
-### 5. Couloir
-- **Aucune porte.** Rendu = panorama couloir + hotspots `nav` positionnés sur chaque vitrine + hotspots `brandWall` pour ouvrir la marque.
-- Mise en lumière à l'approche : quand un hotspot nav est dans un cône de ±15° du regard, son cartel fade-in et un glow CSS s'allume.
-- Score affiché sous chaque cartel.
+Nouveau schéma `rooms` :
+- `slug` text unique (`entree-escalier`, `couloir-etage-1`, `salle-1`, ...) — sert d'ID de scène Pannellum.
+- `kind`: `'entrance' | 'corridor' | 'salle'` (remplace `brand_room`).
+- Suppression de `brand_id` sur rooms (une salle n'appartient plus à 1 marque).
 
-### 6. Salles de marque
-- Panorama unique (placeholder partagé pour l'instant).
-- Hotspots `garmentInfo` (12 cintres + 3 mannequins featured) → BottomSheet fiche produit (réutilise la logique 90/10 existante).
-- Hotspot `brandWall` → BottomSheet **Identité marque** (distincte) : logo, nom Fraunces, badges pastilles, socials cliquables, bio.
+Nouvelle table `salle_brands` :
+- `salle_id` fk rooms, `brand_id` fk brands, `slot_index` 0–5, `is_demo` bool.
+- Détermine quelle marque occupe quel emplacement (gauche/centre/droite × cintres/mannequins/mur) dans la scène.
 
-### 7. Admin calibration hotspots
-- Route `_authenticated/admin/calibrate.$roomId.tsx` (gated `admin` role via `has_role`).
-- Ouvre le panorama de la room, affiche tous les hotspots en mode draggable.
-- Drag = update yaw/pitch en temps réel (via projection inverse de la position souris sur la sphère).
-- Bouton "Sauvegarder" → server fn `updateHotspot` (requireSupabaseAuth + check role admin).
+`hotspots` : ajout colonne `slot_index` (à quelle marque dans la salle ce hotspot appartient), et `subtype` parmi `'hangers' | 'mannequin' | 'wall'` quand pertinent.
 
-### 8. Nettoyage
-- Suppression `Gallery3D.tsx`, `DoorMesh.tsx` (obsolètes).
-- Conservation de `HUD.tsx` adapté.
+Seed :
+- 3 scènes (`entree-escalier`, `couloir-etage-1`, `salle-1`).
+- `salle-1` peuplée avec 2 marques `is_demo=true` (complètes : pieces + wall rempli) et 4 marques vides pour exposer l'état par défaut.
+- Hotspots de nav : entrée→couloir, couloir↔salle-1.
 
-## Critères couverts
-- Inertie regard ✅ / easing transitions ✅ / tap vs drag ✅ / touch 44px ✅ / regroupement ✅ / préchargement ✅ / lock pendant sheet ✅ / état flèches ✅
-- Couloir sans portes ✅ / score ✅ / 4-6 marques ✅ / cartel ✅ / mise en lumière à l'approche ✅
-- Composition salle (cintres G/D, 3 mannequins, mur fond) ✅ / panneau identité distinct ✅ / admin calibration drag&drop ✅
+## 3. Images neutres temporaires
 
-## Limites assumées
-- Calcul du score : fonction SQL prête mais sans cron pg_cron (à activer plus tard).
-- Panoramas : placeholders IA — calibration fine des hotspots à refaire quand les vraies images Skybox arrivent (c'est précisément le rôle de l'admin).
-- Achat : simulation visuelle uniquement (déjà acté).
+Génère 3 panoramas équirectangulaires placeholder 2048×1024, dégradés sobres avec grille faible (juste pour repérer l'orientation) :
+- `pano-entree.jpg` — dégradé pierre claire
+- `pano-couloir.jpg` — dégradé marbre froid
+- `pano-salle.jpg` — dégradé chaud (utilisé par toutes les salles tant que pas remplacé)
+
+Stockage : `src/assets/` + asset.json (via lovable-assets). Champ `panorama_url` en DB pointe vers ces URLs CDN — remplaçables 1-par-1 plus tard sans toucher au code.
+
+## 4. Rendu d'une salle (état vide vs configuré)
+
+Pour chaque slot 0-5 d'une salle, **toujours** afficher les hotspots de structure :
+- 1 hotspot `wall` au fond du slot (cliquable seulement si la marque a logo/bio/réseaux → ouvre `BrandIdentitySheet`, sinon affiche tooltip "Stand disponible").
+- N hotspots `garmentInfo` sur cintres/mannequins (cliquables seulement si pieces liées).
+
+Filtre actuel "garde défensive" (`if !garment_id return false`) **supprimé** : on garde le hotspot visible mais inactif (curseur normal, opacity réduite) — c'est ce qui matérialise la structure vide demandée.
+
+## 5. Interface
+
+- Suppression des composants devenus inutiles : `PanoramaScene.tsx`, `HotspotLayer.tsx`, `projection.ts` (Pannellum gère tout).
+- `HUD.tsx` conservé : un **seul** groupe de contrôles fixes (retour, zoom +/−, plein écran, vignettes scènes). Vérifier qu'aucun contrôle Pannellum natif n'est rendu en parallèle (`showControls: false`, `showZoomCtrl: false`, `showFullscreenCtrl: false`).
+- Store zustand : simplifié — ne garde que `currentSceneId` + `sheet`. Plus de yaw/pitch/fov dans le store (Pannellum est source de vérité).
+
+## 6. Admin calibration
+
+`admin-calibrate.tsx` : adapté pour utiliser le mode debug Pannellum (`hotSpotDebug: true` affiche les coords au clic console) → admin clique sur la position voulue, on récupère pitch/yaw, on update le hotspot en DB. Plus simple que le drag custom actuel.
+
+## 7. Critères d'acceptation (à valider avant photos Skybox)
+
+- [x] Pannellum installé, scènes déclarées, navigation scene-à-scène native.
+- [x] Parcours `entrée → couloir → salle-1 → couloir → entrée` fonctionnel sans erreur console.
+- [x] Salle-1 affiche les 6 stands : 2 démo complets, 4 stands vides avec structure visible.
+- [x] HUD unique, pas de doublon de contrôles.
+- [x] Achat sur piece de marque démo → commission 90/10 (logique existante conservée).
+- [x] Testable sur mobile (Pannellum supporte le touch nativement).
+
+## Détails techniques (annexe)
+
+**Fichiers créés :**
+- `src/features/visite/PannellumViewer.tsx` (remplace PanoramaViewer)
+- `src/features/visite/pannellumConfig.ts` (builder qui transforme rooms+hotspots+brands en config Pannellum)
+- `src/assets/pano-entree.jpg.asset.json`, `pano-couloir.jpg.asset.json` (réutilise pano-brand-room pour salle)
+
+**Fichiers supprimés :**
+- `PanoramaScene.tsx`, `HotspotLayer.tsx`, `projection.ts`
+
+**Fichiers modifiés :**
+- `store.ts` (simplification), `usePanoramaData.ts` (ajout `useSalleBrands`), `types.ts`, `etage.$num.tsx`, `admin-calibrate.tsx`, `HUD.tsx`, `styles.css` (override Pannellum CSS).
+
+**Migration SQL :**
+1. ALTER rooms : add `slug` unique, change `kind` check constraint, drop `brand_id`.
+2. CREATE TABLE `salle_brands` + GRANT + RLS (lecture publique, écriture admin).
+3. ALTER hotspots : add `slot_index`, `subtype`.
+4. Seed : entrée, couloir, salle-1 (6 slots dont 2 demo).
+
+**Limitations assumées :**
+- Pannellum charge ~150KB gz — acceptable pour la valeur apportée vs custom buggy.
+- L'avertissement React 19 / refs : Pannellum DOM-only, isolé dans un useEffect, pas de souci.
+- Pas de pg_cron pour le recalcul de score nuit (déjà absent aujourd'hui — pas dans le scope de cette refonte).
