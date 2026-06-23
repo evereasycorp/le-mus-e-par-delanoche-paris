@@ -122,14 +122,21 @@ export function PannellumViewer({
         if (h.type === "nav" && h.target_room_id) {
           const targetSlug = idToSlug.get(h.target_room_id);
           if (!targetSlug) continue;
+          const targetRoom = rooms.find((r) => r.id === h.target_room_id);
+          // Always land facing forward at the start of the next scene.
+          const targetYaw = targetRoom?.kind === "entrance" ? 0 : 0;
           hs.push({
             type: "scene",
             sceneId: targetSlug,
             yaw: h.yaw,
-            pitch: h.pitch,
+            pitch: FLOOR_PITCH,
+            targetYaw,
+            targetPitch: 0,
+            targetHfov: 100,
             text: h.label ?? "Aller",
             cssClass: "pnlm-hotspot-museum pnlm-hotspot-nav",
           });
+
         } else if (room.kind === "salle" && h.type === "garmentInfo") {
           const idx = h.slot_index ?? 0;
           hs.push({
