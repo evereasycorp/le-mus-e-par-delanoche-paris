@@ -122,25 +122,11 @@ export function PannellumViewer({
       const hs: PannellumHotSpot[] = [];
 
       for (const h of roomHotspots) {
-        if (h.type === "nav" && h.target_room_id) {
-          const targetSlug = idToSlug.get(h.target_room_id);
-          if (!targetSlug) continue;
-          const targetRoom = rooms.find((r) => r.id === h.target_room_id);
-          // Always land facing forward at the start of the next scene.
-          const targetYaw = targetRoom?.kind === "entrance" ? 0 : 0;
-          hs.push({
-            type: "scene",
-            sceneId: targetSlug,
-            yaw: h.yaw,
-            pitch: FLOOR_PITCH,
-            targetYaw,
-            targetPitch: 0,
-            targetHfov: 100,
-            text: h.label ?? "Aller",
-            cssClass: "pnlm-hotspot-museum pnlm-hotspot-nav",
-          });
-
-        } else if (room.kind === "salle" && h.type === "garmentInfo") {
+        if (h.type === "nav") {
+          // Navigation is handled globally via double-click on the panorama.
+          continue;
+        }
+        if (room.kind === "salle" && h.type === "garmentInfo") {
           const idx = h.slot_index ?? 0;
           hs.push({
             type: "info",
@@ -168,35 +154,9 @@ export function PannellumViewer({
         }
       }
 
-      // Corridor: doors paired left/right at the start of the corridor,
-      // converging into the depth — first 2 brands flank the viewer on arrival.
-      if (room.kind === "corridor" && salleRoom && brands.length > 0) {
-        const salleSlug = idToSlug.get(salleRoom.id) ?? salleRoom.slug ?? salleRoom.id;
-        brands.forEach((brand, i) => {
-          const pairIndex = Math.floor(i / 2);
-          const side = i % 2 === 0 ? -1 : 1; // even = left, odd = right
-          const baseYaw = DOOR_PAIR_YAWS[pairIndex] ?? 6;
-          const yaw = side * baseYaw;
-          hs.push({
-            type: "info",
-            yaw,
-            pitch: FLOOR_PITCH,
-            text: brand.name,
-            cssClass: "pnlm-hotspot-museum pnlm-hotspot-door",
-            clickHandlerFunc: () => {
-              cbRef.current.onSelectBrand(brand.id);
-              const viewer = instanceRef.current;
-              if (viewer) {
-                try {
-                  viewer.loadScene(salleSlug);
-                } catch {
-                  /* noop */
-                }
-              }
-            },
-          });
-        });
-      }
+      // Note: corridor brand doors are no longer rendered as hotspots.
+      // Double-click in the direction of a brand opens its salle (see dblclick handler below).
+
 
 
       scenes[sceneId] = {
