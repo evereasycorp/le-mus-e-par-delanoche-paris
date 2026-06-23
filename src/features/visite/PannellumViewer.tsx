@@ -209,11 +209,43 @@ export function PannellumViewer({
       };
     }
 
-    // -------- Double-click to advance --------
-    // Smallest signed angular delta between two yaws, in degrees.
+    // -------- Double-click = cinematic "walk forward" zoom --------
+    // Smallest unsigned angular delta between two yaws, in degrees.
     const yawDelta = (a: number, b: number) => {
-      let d = ((a - b + 540) % 360) - 180;
+      const d = ((a - b + 540) % 360) - 180;
       return Math.abs(d);
+    };
+
+    // Animate hfov from current to a tighter value (zoom in), then optionally
+    // load the next scene. Gives the user a sense of stepping into the place.
+    const zoomThen = (next: { sceneId: string } | null) => {
+      const v = instanceRef.current;
+      if (!v) return;
+      const startHfov = v.getHfov();
+      const endHfov = next ? 42 : Math.max(55, startHfov - 18);
+      const duration = next ? 700 : 450;
+      const t0 = performance.now();
+      const step = (now: number) => {
+        const v2 = instanceRef.current;
+        if (!v2) return;
+        const t = Math.min(1, (now - t0) / duration);
+        const e = 1 - Math.pow(1 - t, 3); // easeOutCubic
+        try {
+          v2.setHfov(startHfov + (endHfov - startHfov) * e);
+        } catch {
+          /* ignore */
+        }
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else if (next) {
+          try {
+            v2.loadScene(next.sceneId, 0, 0, 100);
+          } catch {
+            /* ignore */
+          }
+        }
+      };
+      requestAnimationFrame(step);
     };
 
     const handleDblClick = (ev: MouseEvent) => {
@@ -230,7 +262,6 @@ export function PannellumViewer({
       const corridorSlug = slugOf(corridorRoom);
       const salleSlug = slugOf(salleRoom);
 
-      // Get the yaw the user double-clicked on.
       let clickYaw: number | null = null;
       try {
         const coords = v.mouseEventToCoords?.(ev);
@@ -240,18 +271,18 @@ export function PannellumViewer({
       }
 
       if (currentRoom.kind === "entrance") {
-        // Anywhere → go up the stairs into the corridor.
-        if (corridorSlug) v.loadScene(corridorSlug, 0, 0, 100);
+        // Anywhere → cinematic zoom up the stairs, then enter the corridor.
+        zoomThen(corridorSlug ? { sceneId: corridorSlug } : null);
         return;
       }
 
       if (currentRoom.kind === "corridor") {
-        // Click in the back zone (~ yaw 180) → return to the hall.
+        // Back zone (~ yaw 180) → zoom + return to the hall.
         if (clickYaw !== null && yawDelta(clickYaw, 180) <= BACK_HIT_HALF) {
-          if (entranceSlug) v.loadScene(entranceSlug, 0, 0, 100);
+          zoomThen(entranceSlug ? { sceneId: entranceSlug } : null);
           return;
         }
-        // Find the closest brand door by yaw.
+        // Closest door zone → select brand + zoom into the salle.
         if (clickYaw !== null && liveBrands.length > 0 && salleSlug) {
           let bestIdx = -1;
           let bestDist = Infinity;
@@ -268,18 +299,23 @@ export function PannellumViewer({
           });
           if (bestIdx >= 0 && bestDist <= DOOR_HIT_HALF) {
             cbRef.current.onSelectBrand(liveBrands[bestIdx].id);
-            v.loadScene(salleSlug, 0, 0, 100);
+            zoomThen({ sceneId: salleSlug });
+            return;
           }
         }
+        // No door in this direction → just a "step closer" zoom, no transition.
+        zoomThen(null);
         return;
       }
 
       if (currentRoom.kind === "salle") {
-        // Anywhere → return to the corridor.
-        if (corridorSlug) v.loadScene(corridorSlug, 0, 0, 100);
+        // No auto-exit on dbl-click — visitor uses the explicit "Sortir" button.
+        // Double-click in a salle simply zooms in to inspect the scene.
+        zoomThen(null);
         return;
       }
     };
+
 
     el.addEventListener("dblclick", handleDblClick);
 
@@ -311,13 +347,42 @@ export function PannellumViewer({
     }
   }, [currentRoomId, rooms]);
 
+  const currentRoom = rooms.find((r) => r.id === currentRoomId);
+  const isInSalle = currentRoom?.kind === "salle";
+  const corridorSlug = corridorRoom?.slug ?? corridorRoom?.id ?? null;
+
+  const handleExitSalle = () => {
+    const v = instanceRef.current;
+    if (v && corridorSlug) {
+      try {
+        v.loadScene(corridorSlug, 0, 0, 100);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
   return (
     <div className="absolute inset-0 bg-black">
       <div ref={containerRef} className="absolute inset-0" />
+
+      {isInSalle && (
+        <button
+          type="button"
+          onClick={handleExitSalle}
+          className="absolute top-4 left-4 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-sm border border-[color:var(--gold)]/50 text-[color:var(--gold-soft)] text-[11px] tracking-[0.22em] uppercase font-sans hover:bg-black/85 hover:border-[color:var(--gold)] transition"
+          aria-label="Sortir de la salle"
+        >
+          <span aria-hidden>←</span>
+          Sortir de la salle
+        </button>
+      )}
+
       <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-black/55 backdrop-blur-sm border border-[color:var(--gold)]/30 text-[10px] tracking-[0.18em] uppercase text-[color:var(--gold-soft)] font-sans">
-        Double-cliquez pour avancer
+        {isInSalle ? "Double-cliquez pour observer" : "Double-cliquez pour avancer"}
       </div>
     </div>
   );
 }
+
 
