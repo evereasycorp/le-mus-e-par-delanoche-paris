@@ -1,143 +1,64 @@
+# Refonte Visite 360° — Panoramas equirectangulaires
 
-# Visite 360° — Galerie immersive r3f
+## Stack technique
+- **Viewer** : Three.js sphère inversée + texture equirectangulaire (pas de Pannellum, on garde notre contrôle complet sur inertie/hotspots/zoom). On réutilise `three` et `@react-three/fiber` déjà installés.
+- **Hotspots** : projection yaw/pitch → coordonnées écran via `Vector3.project(camera)`, rendus en HTML overlay (zones 44×44 garanties, regroupement auto).
+- **Data** : tables Supabase `rooms`, `hotspots`, extension de `brands` (bio, socials, badges, logo_url, score).
 
-Refonte complète du couloir actuel (`corridor-scene.tsx` scrollable) en vraie scène 3D react-three-fiber, dans l'esthétique d'une galerie de musée bien exposée.
+## Étapes
 
-## 1. Dépendances
+### 1. Base de données
+Migration ajoutant :
+- `rooms` (id, kind: 'corridor'|'brand_room', floor, order_index, panorama_url, brand_id?, next_room_id?)
+- `hotspots` (id, room_id, type: 'nav'|'garmentInfo'|'brandWall', yaw, pitch, target_room_id?, garment_id?, brand_id?)
+- `brands` : ajout colonnes `bio`, `socials jsonb`, `badges text[]`, `logo_url`, `score` (calculé 50% ventes / 30% satisfaction / 20% activité — fonction SQL `recompute_brand_scores()` + comment indiquant le cron à venir).
+- Seed : 1 couloir + 3 salles de marque chaînées avec 4-6 marques.
+- GRANT + RLS publiques en lecture, écriture admin only.
 
-Install via `bun add` :
-- `three`
-- `@react-three/fiber`
-- `@react-three/drei`
-- `zustand` (état de visite : portes ouvertes, waypoint courant, salle débloquée)
-- `@types/three` (dev)
+### 2. Placeholders panoramas 360°
+- Génération d'1 image equirectangulaire 2048×1024 pour le couloir Louvre (pierre claire, voûte en berceau, vitrines ouvertes sur les côtés, sol lignes laiton).
+- Génération d'1 image equirectangulaire 2048×1024 pour salle de marque (cintres murs G/D, 3 mannequins centre, mur d'identité au fond).
+- Upload via `lovable-assets`.
 
-## 2. Architecture fichiers
+### 3. Viewer Panorama (`src/features/visite/`)
+- `PanoramaViewer.tsx` : Canvas r3f, sphère inversée, texture chargée avec preload de la scène suivante (TextureLoader cache).
+- `CameraController.tsx` : drag-look avec **inertie ease-out 400ms** sur release, FOV zoom, distinction tap (<8px) vs drag.
+- `HotspotLayer.tsx` : projection yaw/pitch→écran, zones touch 44×44, **regroupement <30px en badge "+N"**, désactivation pointer-events quand bottom-sheet ouverte.
+- `store.ts` (zustand) : `currentRoomId`, `isSheetOpen` (verrouille contrôles), `cameraYaw`, `cameraPitch`, `fov`.
+- Transitions entre rooms : fade noir→nouveau panorama, easing cubic 600ms.
 
-```text
-src/
-  features/visite/
-    store.ts                 # zustand: currentWaypointId, openedDoors, fov, fullscreen
-    types.ts                 # Waypoint, Door, Garment
-    useGalleryData.ts        # query brands publiées → portes + waypoints dérivés
-    Gallery3D.tsx            # <Canvas> + lights + fog + camera rig
-    scene/
-      CorridorArchitecture.tsx  # voûte berceau, arches, murs, sol pierre, bandeau lumineux
-      DoorMesh.tsx              # porte 3D pivotante + cadre doré + cartel
-      WaypointMarker.tsx        # point or au sol, hidden si locked
-      GarmentHotspot.tsx        # icône "i" projetée écran depuis pos 3D
-      CameraRig.tsx             # gestion yaw/pitch drag + interpolation déplacement
-    hud/
-      ControlsBar.tsx           # flèches gauche/droite, fullscreen, zoom +/-
-      ThumbnailFilm.tsx         # pellicule waypoints en bas
-      DoorHoldRing.tsx          # anneau progression (overlay 2D au-dessus de la porte ciblée)
-      GarmentSheet.tsx          # bottom-sheet produit + bouton Acheter (90/10)
-  routes/
-    etage.$num.tsx           # remplace CorridorScene par <Gallery3D floor={num} />
-```
+### 4. HUD
+- Flèches Next/Prev (état désactivé en bord de chaîne).
+- Filmstrip vignettes des rooms (verrouillées grisées).
+- Zoom +/−, plein écran (Fullscreen API).
+- Cartel marque sticky en bas dans le couloir (nom + score).
 
-Suppression de `src/components/corridor-scene.tsx` (remplacé).
-Les keyframes `doorLeftOpen/Right/Light` dans `src/styles.css` deviennent obsolètes → retirées.
+### 5. Couloir
+- **Aucune porte.** Rendu = panorama couloir + hotspots `nav` positionnés sur chaque vitrine + hotspots `brandWall` pour ouvrir la marque.
+- Mise en lumière à l'approche : quand un hotspot nav est dans un cône de ±15° du regard, son cartel fade-in et un glow CSS s'allume.
+- Score affiché sous chaque cartel.
 
-## 3. Direction artistique (lumière galerie)
+### 6. Salles de marque
+- Panorama unique (placeholder partagé pour l'instant).
+- Hotspots `garmentInfo` (12 cintres + 3 mannequins featured) → BottomSheet fiche produit (réutilise la logique 90/10 existante).
+- Hotspot `brandWall` → BottomSheet **Identité marque** (distincte) : logo, nom Fraunces, badges pastilles, socials cliquables, bio.
 
-Palette appliquée via matériaux three :
-- Murs `#EFEAE0` (MeshStandardMaterial, roughness 0.85)
-- Sol `#D9D2C4` avec normalMap subtile (joints), légèrement réfléchissant
-- Voûte `#F4F1EA`
-- Cadres portes `#B08D57` / poignées `#D4AF6A` (MeshStandardMaterial metalness 0.6)
+### 7. Admin calibration hotspots
+- Route `_authenticated/admin/calibrate.$roomId.tsx` (gated `admin` role via `has_role`).
+- Ouvre le panorama de la room, affiche tous les hotspots en mode draggable.
+- Drag = update yaw/pitch en temps réel (via projection inverse de la position souris sur la sphère).
+- Bouton "Sauvegarder" → server fn `updateHotspot` (requireSupabaseAuth + check role admin).
 
-Éclairage :
-- `ambientLight` intensity 1.9
-- `hemisphereLight` skyColor `#FFFBF2`, groundColor `#C9C0AE`, intensity 0.8
-- Bandeau zénithal : `RectAreaLight` linéaire le long de la voûte (avec `RectAreaLightUniformsLib` via drei)
-- `SpotLight` doux au-dessus de chaque porte (cone large, intensity 0.6, pas d'ombre dure)
-- `fog` couleur `#EDE9E1`, near 18, far 45 (profondeur sans assombrir)
-- `ContactShadows` drei sous portes et banquette (opacity 0.25)
+### 8. Nettoyage
+- Suppression `Gallery3D.tsx`, `DoorMesh.tsx` (obsolètes).
+- Conservation de `HUD.tsx` adapté.
 
-## 4. Architecture du couloir
+## Critères couverts
+- Inertie regard ✅ / easing transitions ✅ / tap vs drag ✅ / touch 44px ✅ / regroupement ✅ / préchargement ✅ / lock pendant sheet ✅ / état flèches ✅
+- Couloir sans portes ✅ / score ✅ / 4-6 marques ✅ / cartel ✅ / mise en lumière à l'approche ✅
+- Composition salle (cintres G/D, 3 mannequins, mur fond) ✅ / panneau identité distinct ✅ / admin calibration drag&drop ✅
 
-- Voûte en berceau : 6–8 arches successives (`extrudeGeometry` d'un arc + répétition)
-- Murs latéraux avec pilastres entre les arches
-- Sol carrelé en pierre, lignes de fuite visibles via UV repeat
-- Banquette centrale à mi-couloir (simple box + cylinder pieds)
-- Portes positionnées symétriquement gauche/droite, espacées de 6 unités
-- Cartel sous chaque porte : `<Html>` drei (HTML positionné dans le 3D) avec nom marque + score
-
-## 5. Interactions
-
-### 5.1 Regard 360°
-- `CameraRig` : capture `pointerdown/move/up` sur le canvas
-- Drag horizontal → yaw illimité ; vertical → pitch clamp `[-30°, 35°]`
-- Inertie : décélération exponentielle (~250ms) sur dernière vélocité
-- Pointer events delegated to canvas, pas de OrbitControls (trop générique)
-
-### 5.2 Déplacement par points
-- `WaypointMarker` rendu **uniquement si `!locked`** (early return, jamais dans le DOM)
-- Tap → `useGalleryStore.setCurrentWaypoint(id)` → CameraRig interpole position (ease-out cubic, 700ms via `useFrame`)
-- Waypoints derrière une porte fermée : `locked: true` tant que `openedDoors` ne contient pas la door associée
-
-### 5.3 Porte (appui long)
-- `DoorMesh` détecte `pointerdown` sur la poignée → démarre timer 800ms
-- Pendant l'appui, `DoorHoldRing` (SVG overlay 2D positionné via projection écran) se remplit
-- `pointermove` avec delta > 12px → annule, anneau se vide
-- Fin du timer : `door.opened = true`, animation rotation Y de 0 → -95° sur 600ms (`useFrame` + easing), `navigator.vibrate?.(20)`, déverrouille `unlocksWaypoints`
-- Une fois ouverte, tap sur la porte → navigation vers `/salle/$slug` (route existante)
-
-### 5.4 Flèches + fullscreen + zoom
-- `ControlsBar` (fixed bottom) :
-  - ← / → : `currentIndex ± 1` dans la liste filtrée des waypoints débloqués (disabled si suivant locked)
-  - Fullscreen : `document.documentElement.requestFullscreen()` / `exitFullscreen()`
-  - Zoom +/- : `camera.fov` clamp [40, 80], `camera.updateProjectionMatrix()`
-- `ThumbnailFilm` : liste waypoints, locked grisé + icône cadenas, click = setCurrentWaypoint
-
-### 5.5 Vêtements (préparé, salle = phase 2)
-- `GarmentHotspot` calcule projection écran via `camera.project()` dans `useFrame`
-- Masqué si hors champ (`z > 1` ou hors viewport) ou salle locked
-- Tap → bottom-sheet (shadcn `Sheet`) : photo, nom, marque, prix
-- Bouton "Acheter" : affiche `Math.round(price * 0.9)` à la marque / `Math.round(price * 0.1)` commission Le Musée (calcul dynamique, pas hardcodé). Pas de Stripe.
-
-## 6. Données
-
-`useGalleryData(floor)` :
-- `useQuery` → `supabase.from('brands').select('id, slug, name, score').eq('floor', floor).eq('published', true)`
-- Map → `Door[]` avec positions calculées (alternance G/D, z = -6 * index)
-- Génère `Waypoint[]` : 1 point devant chaque porte (locked: false pour le premier, locked: true pour les suivants tant que la porte précédente n'est pas ouverte) — règle ajustable
-- Pas de mock : fallback liste vide + message si aucune brand
-
-## 7. Performance mobile
-
-- `dpr={[1, 2]}` sur `<Canvas>`
-- `frameloop="demand"` + invalidate sur interaction (regard, animation porte)
-- Spot lights : `castShadow={false}` sauf 2 plus proches
-- Culling distance : portes > 30u retirées du render
-- Geometries partagées (une seule `BoxGeometry` mur instanciée)
-- `<Suspense fallback={<LoadingGallery />}>` autour de la scène
-
-## 8. État global (zustand)
-
-```ts
-type VisiteState = {
-  currentWaypointId: string | null;
-  openedDoors: Set<string>;
-  fov: number;
-  setCurrentWaypoint(id: string): void;
-  openDoor(id: string, unlocks: string[]): void;
-  zoomIn(): void; zoomOut(): void;
-}
-```
-
-## 9. Critères d'acceptation couverts
-
-- [x] Lumière galerie claire, jamais noir (ambient 1.9 + hemi + rect area + fog clair)
-- [x] Aucun élément verrouillé rendu (early return sur `locked`, pas d'opacity 0)
-- [x] Appui long fonctionne tactile (pointerdown + pointermove cancel, vibrate)
-- [x] Flèches, zoom, fullscreen, déplacement = tous branchés (API réelles)
-- [x] Commission 10% calculée dynamiquement
-- [x] dpr cappé + frameloop demand + culling pour 60fps mobile
-
-## 10. Hors scope (à valider ensuite)
-
-- Refonte 3D de la **Salle** (Wall + Expo) — phase 2 une fois le couloir validé
-- Stripe Connect réel — phase 3
-- Modèles GLTF custom pour banquette/portes (on reste sur primitives + matériaux pour cette V1)
+## Limites assumées
+- Calcul du score : fonction SQL prête mais sans cron pg_cron (à activer plus tard).
+- Panoramas : placeholders IA — calibration fine des hotspots à refaire quand les vraies images Skybox arrivent (c'est précisément le rôle de l'admin).
+- Achat : simulation visuelle uniquement (déjà acté).
