@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, Minus, Plus, Home } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useVisiteStore } from "./store";
 import type { Room } from "./types";
 
 export function HUD({
   currentRoom,
   rooms,
   onGoToRoom,
+  onZoomIn,
+  onZoomOut,
 }: {
   currentRoom: Room | null;
   rooms: Room[];
   onGoToRoom: (roomId: string) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
 }) {
-  const zoomIn = useVisiteStore((s) => s.zoomIn);
-  const zoomOut = useVisiteStore((s) => s.zoomOut);
   const [fs, setFs] = useState(false);
-
   useEffect(() => {
     const h = () => setFs(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", h);
@@ -32,8 +32,12 @@ export function HUD({
     }
   }
 
-  const prev = currentRoom?.prev_room_id ?? null;
-  const next = currentRoom?.next_room_id ?? null;
+  const currentIdx = rooms.findIndex((r) => r.id === currentRoom?.id);
+  const prevRoom = currentIdx > 0 ? rooms[currentIdx - 1] : null;
+  const nextRoom = currentIdx >= 0 && currentIdx < rooms.length - 1 ? rooms[currentIdx + 1] : null;
+
+  const kindLabel = (k?: Room["kind"]) =>
+    k === "entrance" ? "Entrée" : k === "corridor" ? "Couloir" : "Salle";
 
   return (
     <>
@@ -47,14 +51,14 @@ export function HUD({
           <Home className="h-4 w-4" />
         </Link>
         <button
-          onClick={zoomIn}
+          onClick={onZoomIn}
           className="h-9 w-9 rounded-sm border border-[#B08D57]/40 bg-[#F4F1EA]/90 text-[#2b2218] backdrop-blur transition hover:bg-[#F4F1EA]"
           aria-label="Zoom avant"
         >
           <Plus className="mx-auto h-4 w-4" />
         </button>
         <button
-          onClick={zoomOut}
+          onClick={onZoomOut}
           className="h-9 w-9 rounded-sm border border-[#B08D57]/40 bg-[#F4F1EA]/90 text-[#2b2218] backdrop-blur transition hover:bg-[#F4F1EA]"
           aria-label="Zoom arrière"
         >
@@ -69,22 +73,20 @@ export function HUD({
         </button>
       </div>
 
-      {/* Titre salle : à gauche sous le header, n'entre pas en collision avec le cluster */}
       {currentRoom && (
         <div className="pointer-events-none absolute left-2 top-[64px] z-20 max-w-[55%] rounded-sm border border-[#B08D57]/40 bg-[#F4F1EA]/90 px-3 py-1.5 backdrop-blur">
           <div className="text-[9px] uppercase tracking-wider text-[#B08D57]">
-            {currentRoom.kind === "corridor" ? "Couloir" : "Salle"}
+            {kindLabel(currentRoom.kind)}
           </div>
           <div className="truncate font-serif text-sm text-[#2b2218]">{currentRoom.title}</div>
         </div>
       )}
 
-      {/* Bottom: arrows + film */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 px-3 pb-3">
         <div className="pointer-events-auto flex w-full max-w-md items-center gap-2">
           <button
-            onClick={() => prev && onGoToRoom(prev)}
-            disabled={!prev}
+            onClick={() => prevRoom && onGoToRoom(prevRoom.id)}
+            disabled={!prevRoom}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-[#B08D57]/40 bg-[#F4F1EA]/90 text-[#2b2218] transition disabled:opacity-30"
             aria-label="Précédent"
           >
@@ -112,8 +114,8 @@ export function HUD({
           </div>
 
           <button
-            onClick={() => next && onGoToRoom(next)}
-            disabled={!next}
+            onClick={() => nextRoom && onGoToRoom(nextRoom.id)}
+            disabled={!nextRoom}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-[#B08D57]/40 bg-[#F4F1EA]/90 text-[#2b2218] transition disabled:opacity-30"
             aria-label="Suivant"
           >

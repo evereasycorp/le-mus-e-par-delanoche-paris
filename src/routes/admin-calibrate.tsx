@@ -1,20 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Save, ArrowLeft, Info, Building2, ArrowRight as ArrowRightIcon } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { PanoramaScene } from "@/features/visite/PanoramaScene";
-import { useVisiteStore } from "@/features/visite/store";
-import { project, unproject, degToRad, radToDeg } from "@/features/visite/projection";
-import { resolvePanoramaUrl } from "@/features/visite/panoramas";
 import type { Hotspot, Room } from "@/features/visite/types";
 
 export const Route = createFileRoute("/admin-calibrate")({
   ssr: false,
   validateSearch: (s: Record<string, unknown>) => ({ roomId: (s.roomId as string) ?? "" }),
-  head: () => ({ meta: [{ title: "Calibration hotspots — Cabinet" }, { name: "robots", content: "noindex,nofollow" }] }),
+  head: () => ({
+    meta: [
+      { title: "Calibration hotspots — Cabinet" },
+      { name: "robots", content: "noindex,nofollow" },
+    ],
+  }),
   component: CalibratePage,
 });
 
@@ -70,201 +71,140 @@ function CalibratePage() {
     },
   });
 
-  // Editable local copy
   const [draft, setDraft] = useState<Hotspot[]>([]);
   useEffect(() => {
     if (hotspotsQuery.data) setDraft(hotspotsQuery.data.map((h) => ({ ...h })));
   }, [hotspotsQuery.data]);
 
-  const room = roomsQuery.data?.find((r) => r.id === roomId);
-  const panoramaUrl = resolvePanoramaUrl(room?.panorama_url);
-
-  // Camera control
-  const yaw = useVisiteStore((s) => s.yaw);
-  const pitch = useVisiteStore((s) => s.pitch);
-  const fov = useVisiteStore((s) => s.fov);
-  const setOrientation = useVisiteStore((s) => s.setOrientation);
-  const setFov = useVisiteStore((s) => s.setFov);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ w: 0, h: 0 });
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setSize({ w: el.clientWidth, h: el.clientHeight }));
-    ro.observe(el);
-    setSize({ w: el.clientWidth, h: el.clientHeight });
-    return () => ro.disconnect();
-  }, []);
-
-  // Pan camera with drag on empty area
-  const cameraDrag = useRef<{ active: boolean; lx: number; ly: number; moved: number }>({
-    active: false,
-    lx: 0,
-    ly: 0,
-    moved: 0,
-  });
-  const draggingHotspotId = useRef<string | null>(null);
-
-  function onScenePointerDown(e: React.PointerEvent) {
-    if (draggingHotspotId.current) return;
-    cameraDrag.current = { active: true, lx: e.clientX, ly: e.clientY, moved: 0 };
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-  }
-  function onScenePointerMove(e: React.PointerEvent) {
-    if (draggingHotspotId.current) {
-      // Drag selected hotspot under cursor
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
-      const { yawRad, pitchRad } = unproject(px, py, yaw, pitch, fov, rect.width, rect.height);
-      setDraft((d) =>
-        d.map((h) =>
-          h.id === draggingHotspotId.current
-            ? { ...h, yaw: radToDeg(yawRad), pitch: radToDeg(pitchRad) }
-            : h,
-        ),
-      );
-      return;
-    }
-    if (!cameraDrag.current.active) return;
-    const dx = e.clientX - cameraDrag.current.lx;
-    const dy = e.clientY - cameraDrag.current.ly;
-    cameraDrag.current.moved += Math.hypot(dx, dy);
-    const w = size.w || 1;
-    const h = size.h || 1;
-    const fovRad = degToRad(fov);
-    setOrientation(yaw - (dx / w) * fovRad * (w / h), pitch - (dy / h) * fovRad);
-    cameraDrag.current.lx = e.clientX;
-    cameraDrag.current.ly = e.clientY;
-  }
-  function onScenePointerUp() {
-    cameraDrag.current.active = false;
-    draggingHotspotId.current = null;
-  }
+  const dirty = useMemo(() => {
+    if (!hotspotsQuery.data) return false;
+    return draft.some((h, i) => {
+      const src = hotspotsQuery.data![i];
+      return !src || src.yaw !== h.yaw || src.pitch !== h.pitch;
+    });
+  }, [draft, hotspotsQuery.data]);
 
   async function saveAll() {
-    if (!roomId) return;
-    const updates = draft.map((h) =>
-      supabase.from("hotspots").update({ yaw: h.yaw, pitch: h.pitch }).eq("id", h.id),
-    );
-    const results = await Promise.all(updates);
-    const failed = results.filter((r) => r.error);
-    if (failed.length) {
-      toast.error(`${failed.length} mise à jour(s) en échec`);
-      console.error(failed.map((r) => r.error));
-    } else {
-      toast.success("Positions sauvegardées");
-      qc.invalidateQueries({ queryKey: ["calibrate", "hotspots", roomId] });
-      qc.invalidateQueries({ queryKey: ["visite", "hotspots", roomId] });
+    for (const h of draft) {
+      const { error } = await supabase
+        .from("hotspots")
+        .update({ yaw: h.yaw, pitch: h.pitch })
+        .eq("id", h.id);
+      if (error) {
+        toast.error(`Échec sauvegarde : ${error.message}`);
+        return;
+      }
     }
+    toast.success("Hotspots enregistrés");
+    qc.invalidateQueries({ queryKey: ["calibrate", "hotspots", roomId] });
+    qc.invalidateQueries({ queryKey: ["visite"] });
   }
 
-  const projected = useMemo(() => {
-    return draft.map((h) => ({
-      h,
-      ...project(degToRad(h.yaw), degToRad(h.pitch), yaw, pitch, fov, size.w, size.h),
-    }));
-  }, [draft, yaw, pitch, fov, size]);
-
   if (loading || status === "checking") {
-    return <main className="min-h-screen flex items-center justify-center bg-background text-foreground/60">Vérification…</main>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Vérification…
+      </div>
+    );
   }
   if (status === "denied") {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-        <h1 className="font-serif text-2xl">Accès réservé</h1>
-        <Link to="/" className="text-sm underline">Retour au Hall</Link>
-      </main>
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Accès refusé. <Link to="/" className="ml-2 underline">Retour</Link>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#1a1612] text-[#F4F1EA]">
-      <header className="flex items-center justify-between border-b border-[#B08D57]/30 bg-[#231d17] px-4 py-3">
-        <Link to="/admin" className="flex items-center gap-2 text-xs uppercase tracking-wider hover:text-[#B08D57]">
-          <ArrowLeft className="h-4 w-4" /> Retour
-        </Link>
-        <div className="text-xs uppercase tracking-wider text-[#B08D57]">Calibration hotspots</div>
-        <button
-          onClick={saveAll}
-          disabled={!roomId || draft.length === 0}
-          className="flex items-center gap-2 rounded-sm bg-[#B08D57] px-3 py-1.5 text-xs uppercase tracking-wider text-[#1a1612] transition hover:bg-[#9c7a48] disabled:opacity-30"
-        >
-          <Save className="h-4 w-4" /> Sauvegarder
-        </button>
-      </header>
+    <div className="min-h-screen bg-[#F4F1EA] p-6 text-[#2b2218]">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-2 text-sm text-[#B08D57] hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" /> Cabinet
+          </Link>
+          <h1 className="font-serif text-2xl">Calibration des hotspots</h1>
+          <button
+            disabled={!dirty}
+            onClick={saveAll}
+            className="inline-flex items-center gap-2 rounded-sm border border-[#B08D57] bg-[#B08D57] px-3 py-2 text-sm text-[#F4F1EA] disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" /> Enregistrer
+          </button>
+        </div>
 
-      <div className="flex flex-col gap-2 border-b border-[#B08D57]/20 px-4 py-3 md:flex-row md:items-center">
-        <label className="text-xs uppercase tracking-wider text-[#B08D57]">Salle :</label>
+        <label className="block text-xs uppercase tracking-wider text-[#B08D57]">Scène</label>
         <select
           value={roomId}
-          onChange={(e) => navigate({ to: "/admin-calibrate", search: { roomId: e.target.value } })}
-          className="rounded-sm bg-[#231d17] px-2 py-1 text-sm"
+          onChange={(e) =>
+            navigate({ to: "/admin-calibrate", search: { roomId: e.target.value } })
+          }
+          className="mt-1 w-full rounded-sm border border-[#B08D57]/40 bg-white p-2 text-sm"
         >
-          <option value="">— choisir —</option>
+          <option value="">— Choisir —</option>
           {roomsQuery.data?.map((r) => (
             <option key={r.id} value={r.id}>
-              [{r.kind}] {r.title}
+              {r.title} ({r.slug ?? r.kind})
             </option>
           ))}
         </select>
-        <div className="text-xs text-[#F4F1EA]/60 md:ml-4">
-          Glisser un hotspot pour le repositionner. Glisser le décor pour orienter la caméra. Molette = zoom.
-        </div>
-      </div>
 
-      {!roomId ? (
-        <div className="p-10 text-center text-[#F4F1EA]/60">Sélectionne une salle pour commencer.</div>
-      ) : (
-        <div
-          ref={containerRef}
-          className="relative h-[calc(100vh-9rem)] touch-none select-none overflow-hidden bg-black"
-          onPointerDown={onScenePointerDown}
-          onPointerMove={onScenePointerMove}
-          onPointerUp={onScenePointerUp}
-          onPointerCancel={onScenePointerUp}
-          onWheel={(e) => setFov(fov + (e.deltaY > 0 ? 4 : -4))}
-        >
-          <PanoramaScene panoramaUrl={panoramaUrl} preloadUrls={[]} />
-          <div className="pointer-events-none absolute inset-0 z-10">
-            {projected.map(({ h, x, y, visible }) =>
-              !visible ? null : (
-                <div
-                  key={h.id}
-                  className="pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
-                  style={{ left: x, top: y }}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    draggingHotspotId.current = h.id;
-                    (e.target as Element).setPointerCapture?.(e.pointerId);
-                  }}
-                  onPointerUp={(e) => {
-                    e.stopPropagation();
-                    draggingHotspotId.current = null;
-                  }}
-                >
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-full border-2 shadow-lg ${
-                      h.type === "nav"
-                        ? "border-blue-400 bg-blue-500/80 text-white"
-                        : h.type === "brandWall"
-                        ? "border-amber-400 bg-amber-500/80 text-white"
-                        : "border-emerald-400 bg-emerald-500/80 text-white"
-                    }`}
-                  >
-                    {h.type === "nav" ? <ArrowRightIcon className="h-4 w-4" /> : h.type === "brandWall" ? <Building2 className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+        {roomId && (
+          <div className="mt-6 space-y-3">
+            <p className="text-xs text-[#2b2218]/70">
+              Modifie ici les coordonnées (yaw : -180→180, pitch : -90→90) de chaque hotspot.
+              Astuce : pour repérer la position visuelle voulue, ouvre la scène dans /etage/1,
+              positionne-toi face à l'objet, puis note l'angle.
+            </p>
+            {draft.map((h, i) => (
+              <div
+                key={h.id}
+                className="grid grid-cols-12 items-center gap-2 rounded-sm border border-[#B08D57]/30 bg-white/60 p-3 text-sm"
+              >
+                <div className="col-span-4">
+                  <div className="text-[10px] uppercase tracking-wider text-[#B08D57]">
+                    {h.type}
+                    {h.subtype ? ` · ${h.subtype}` : ""}
                   </div>
-                  <div className="mt-1 whitespace-nowrap rounded bg-black/70 px-2 py-0.5 text-center text-[10px]">
-                    {h.type} · y{h.yaw.toFixed(1)}° p{h.pitch.toFixed(1)}°
-                  </div>
+                  <div className="truncate font-medium">{h.label ?? "(sans titre)"}</div>
                 </div>
-              ),
-            )}
+                <label className="col-span-4 flex items-center gap-2">
+                  <span className="text-xs">yaw</span>
+                  <input
+                    type="number"
+                    step={1}
+                    value={h.yaw}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setDraft((d) =>
+                        d.map((x, j) => (j === i ? { ...x, yaw: v } : x)),
+                      );
+                    }}
+                    className="w-full rounded-sm border border-[#B08D57]/40 bg-white p-1"
+                  />
+                </label>
+                <label className="col-span-4 flex items-center gap-2">
+                  <span className="text-xs">pitch</span>
+                  <input
+                    type="number"
+                    step={1}
+                    value={h.pitch}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setDraft((d) =>
+                        d.map((x, j) => (j === i ? { ...x, pitch: v } : x)),
+                      );
+                    }}
+                    className="w-full rounded-sm border border-[#B08D57]/40 bg-white p-1"
+                  />
+                </label>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
-    </main>
+        )}
+      </div>
+    </div>
   );
 }

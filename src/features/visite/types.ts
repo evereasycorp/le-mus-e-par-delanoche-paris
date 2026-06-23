@@ -1,14 +1,14 @@
-export type RoomKind = "corridor" | "brand_room";
+export type RoomKind = "entrance" | "corridor" | "salle";
 export type HotspotType = "nav" | "garmentInfo" | "brandWall";
 
 export type Room = {
   id: string;
+  slug: string | null;
   kind: RoomKind;
   floor: number;
   order_index: number;
   title: string;
   panorama_url: string;
-  brand_id: string | null;
   next_room_id: string | null;
   prev_room_id: string | null;
 };
@@ -17,14 +17,24 @@ export type Hotspot = {
   id: string;
   room_id: string;
   type: HotspotType;
-  yaw: number; // degrees, 0 = camera forward
-  pitch: number; // degrees, 0 = horizon
+  yaw: number;
+  pitch: number;
   label: string | null;
   target_room_id: string | null;
   garment_id: string | null;
   brand_id: string | null;
   featured: boolean;
   order_index: number;
+  slot_index: number | null;
+  subtype: string | null;
+};
+
+export type SalleBrand = {
+  id: string;
+  salle_id: string;
+  brand_id: string | null;
+  slot_index: number;
+  is_demo: boolean;
 };
 
 export type BrandSocial = { platform: "instagram" | "tiktok" | "website"; url: string };

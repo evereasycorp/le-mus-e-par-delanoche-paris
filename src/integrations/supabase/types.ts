@@ -274,6 +274,8 @@ export type Database = {
           order_index: number
           pitch: number
           room_id: string
+          slot_index: number | null
+          subtype: string | null
           target_room_id: string | null
           type: string
           updated_at: string
@@ -289,6 +291,8 @@ export type Database = {
           order_index?: number
           pitch?: number
           room_id: string
+          slot_index?: number | null
+          subtype?: string | null
           target_room_id?: string | null
           type: string
           updated_at?: string
@@ -304,6 +308,8 @@ export type Database = {
           order_index?: number
           pitch?: number
           room_id?: string
+          slot_index?: number | null
+          subtype?: string | null
           target_room_id?: string | null
           type?: string
           updated_at?: string
@@ -438,7 +444,6 @@ export type Database = {
       }
       rooms: {
         Row: {
-          brand_id: string | null
           created_at: string
           floor: number
           id: string
@@ -448,11 +453,11 @@ export type Database = {
           order_index: number
           panorama_url: string
           prev_room_id: string | null
+          slug: string | null
           title: string
           updated_at: string
         }
         Insert: {
-          brand_id?: string | null
           created_at?: string
           floor?: number
           id?: string
@@ -462,11 +467,11 @@ export type Database = {
           order_index?: number
           panorama_url: string
           prev_room_id?: string | null
+          slug?: string | null
           title: string
           updated_at?: string
         }
         Update: {
-          brand_id?: string | null
           created_at?: string
           floor?: number
           id?: string
@@ -476,17 +481,11 @@ export type Database = {
           order_index?: number
           panorama_url?: string
           prev_room_id?: string | null
+          slug?: string | null
           title?: string
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "rooms_brand_id_fkey"
-            columns: ["brand_id"]
-            isOneToOne: false
-            referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "rooms_next_room_id_fkey"
             columns: ["next_room_id"]
@@ -497,6 +496,48 @@ export type Database = {
           {
             foreignKeyName: "rooms_prev_room_id_fkey"
             columns: ["prev_room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salle_brands: {
+        Row: {
+          brand_id: string | null
+          created_at: string
+          id: string
+          is_demo: boolean
+          salle_id: string
+          slot_index: number
+        }
+        Insert: {
+          brand_id?: string | null
+          created_at?: string
+          id?: string
+          is_demo?: boolean
+          salle_id: string
+          slot_index: number
+        }
+        Update: {
+          brand_id?: string | null
+          created_at?: string
+          id?: string
+          is_demo?: boolean
+          salle_id?: string
+          slot_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salle_brands_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salle_brands_salle_id_fkey"
+            columns: ["salle_id"]
             isOneToOne: false
             referencedRelation: "rooms"
             referencedColumns: ["id"]
