@@ -37,8 +37,8 @@ export function HUD({
 
   return (
     <>
-      {/* Top-right zoom + fullscreen */}
-      <div className="pointer-events-auto absolute right-3 top-3 z-30 flex gap-1.5">
+      {/* Cluster top-right : sous le MuseumHeader sticky (h≈56px) */}
+      <div className="pointer-events-auto absolute right-2 top-[64px] z-30 flex gap-1.5">
         <Link
           to="/"
           className="flex h-9 w-9 items-center justify-center rounded-sm border border-[#B08D57]/40 bg-[#F4F1EA]/90 text-[#2b2218] backdrop-blur transition hover:bg-[#F4F1EA]"
@@ -69,13 +69,13 @@ export function HUD({
         </button>
       </div>
 
-      {/* Top-center: current room name */}
+      {/* Titre salle : à gauche sous le header, n'entre pas en collision avec le cluster */}
       {currentRoom && (
-        <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-sm border border-[#B08D57]/40 bg-[#F4F1EA]/90 px-4 py-1.5 text-center backdrop-blur">
+        <div className="pointer-events-none absolute left-2 top-[64px] z-20 max-w-[55%] rounded-sm border border-[#B08D57]/40 bg-[#F4F1EA]/90 px-3 py-1.5 backdrop-blur">
           <div className="text-[9px] uppercase tracking-wider text-[#B08D57]">
             {currentRoom.kind === "corridor" ? "Couloir" : "Salle"}
           </div>
-          <div className="font-serif text-sm text-[#2b2218]">{currentRoom.title}</div>
+          <div className="truncate font-serif text-sm text-[#2b2218]">{currentRoom.title}</div>
         </div>
       )}
 
