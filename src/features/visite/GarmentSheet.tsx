@@ -41,7 +41,7 @@ export function GarmentSheet({
         </SheetHeader>
 
         {piece.photos && piece.photos[0] && (
-          // eslint-disable-next-line @next/next/no-img-element
+          
           <img
             src={piece.photos[0]}
             alt={piece.name}

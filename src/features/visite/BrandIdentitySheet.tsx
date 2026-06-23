@@ -18,7 +18,7 @@ export function BrandIdentitySheet({
         <SheetHeader className="text-left">
           <div className="flex items-center gap-3">
             {brand.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
+              
               <img
                 src={brand.logo_url}
                 alt={brand.name}
