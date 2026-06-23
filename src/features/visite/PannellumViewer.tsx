@@ -34,13 +34,16 @@ type PannellumScene = {
 
 type PannellumViewerInstance = {
   destroy: () => void;
-  loadScene: (id: string) => void;
+  loadScene: (id: string, pitch?: number | "same", yaw?: number | "same", hfov?: number | "same") => void;
   setHfov: (n: number) => void;
   getHfov: () => number;
   getYaw?: () => number;
   getPitch?: () => number;
+  getScene?: () => string;
+  mouseEventToCoords?: (e: MouseEvent) => [number, number]; // [pitch, yaw]
   on: (ev: string, cb: (...args: unknown[]) => void) => void;
 };
+
 
 declare global {
   interface Window {
@@ -61,11 +64,13 @@ export type PannellumViewerHandle = {
   zoomOut: () => void;
 };
 
-// Floor pitch for nav/door circles — placed visibly on the ground close to viewer.
-const FLOOR_PITCH = -32;
-// Paired door yaws: first pair flanks the viewer at the START of the corridor,
-// subsequent pairs converge toward the depth of the hallway.
+// Paired brand-door yaws used both as visual reference and as click-routing zones.
 const DOOR_PAIR_YAWS = [85, 50, 28, 16, 10];
+// Half-width (in degrees) of the yaw zone that routes a double-click to a given door.
+const DOOR_HIT_HALF = 22;
+// Half-width of the "back" zone (around yaw 180) that routes to the previous scene.
+const BACK_HIT_HALF = 60;
+
 
 
 export function PannellumViewer({
@@ -100,11 +105,15 @@ export function PannellumViewer({
   const cbRef = useRef({ onChangeRoom, onOpenGarment, onOpenBrand, onSelectBrand });
   cbRef.current = { onChangeRoom, onOpenGarment, onOpenBrand, onSelectBrand };
 
-  // Live state for the salle scene — accessed via ref so brand switches don't remount.
-  const liveRef = useRef({ activeBrandId, activeBrandPieces, brands });
-  liveRef.current = { activeBrandId, activeBrandPieces, brands };
+  // Live state — accessed via ref so brand switches or room transitions
+  // don't trigger a full viewer remount.
+  const liveRef = useRef({ activeBrandId, activeBrandPieces, brands, rooms });
+  liveRef.current = { activeBrandId, activeBrandPieces, brands, rooms };
 
   const salleRoom = useMemo(() => rooms.find((r) => r.kind === "salle"), [rooms]);
+  const entranceRoom = useMemo(() => rooms.find((r) => r.kind === "entrance"), [rooms]);
+  const corridorRoom = useMemo(() => rooms.find((r) => r.kind === "corridor"), [rooms]);
+
 
   // Build pannellum config (depends only on rooms / hotspots / brands count, not on activeBrand)
   const config = useMemo(() => {
@@ -119,25 +128,11 @@ export function PannellumViewer({
       const hs: PannellumHotSpot[] = [];
 
       for (const h of roomHotspots) {
-        if (h.type === "nav" && h.target_room_id) {
-          const targetSlug = idToSlug.get(h.target_room_id);
-          if (!targetSlug) continue;
-          const targetRoom = rooms.find((r) => r.id === h.target_room_id);
-          // Always land facing forward at the start of the next scene.
-          const targetYaw = targetRoom?.kind === "entrance" ? 0 : 0;
-          hs.push({
-            type: "scene",
-            sceneId: targetSlug,
-            yaw: h.yaw,
-            pitch: FLOOR_PITCH,
-            targetYaw,
-            targetPitch: 0,
-            targetHfov: 100,
-            text: h.label ?? "Aller",
-            cssClass: "pnlm-hotspot-museum pnlm-hotspot-nav",
-          });
-
-        } else if (room.kind === "salle" && h.type === "garmentInfo") {
+        if (h.type === "nav") {
+          // Navigation is handled globally via double-click on the panorama.
+          continue;
+        }
+        if (room.kind === "salle" && h.type === "garmentInfo") {
           const idx = h.slot_index ?? 0;
           hs.push({
             type: "info",
@@ -165,35 +160,9 @@ export function PannellumViewer({
         }
       }
 
-      // Corridor: doors paired left/right at the start of the corridor,
-      // converging into the depth — first 2 brands flank the viewer on arrival.
-      if (room.kind === "corridor" && salleRoom && brands.length > 0) {
-        const salleSlug = idToSlug.get(salleRoom.id) ?? salleRoom.slug ?? salleRoom.id;
-        brands.forEach((brand, i) => {
-          const pairIndex = Math.floor(i / 2);
-          const side = i % 2 === 0 ? -1 : 1; // even = left, odd = right
-          const baseYaw = DOOR_PAIR_YAWS[pairIndex] ?? 6;
-          const yaw = side * baseYaw;
-          hs.push({
-            type: "info",
-            yaw,
-            pitch: FLOOR_PITCH,
-            text: brand.name,
-            cssClass: "pnlm-hotspot-museum pnlm-hotspot-door",
-            clickHandlerFunc: () => {
-              cbRef.current.onSelectBrand(brand.id);
-              const viewer = instanceRef.current;
-              if (viewer) {
-                try {
-                  viewer.loadScene(salleSlug);
-                } catch {
-                  /* noop */
-                }
-              }
-            },
-          });
-        });
-      }
+      // Note: corridor brand doors are no longer rendered as hotspots.
+      // Double-click in the direction of a brand opens its salle (see dblclick handler below).
+
 
 
       scenes[sceneId] = {
@@ -239,7 +208,83 @@ export function PannellumViewer({
         zoomOut: () => viewer.setHfov(Math.min(120, viewer.getHfov() + 8)),
       };
     }
+
+    // -------- Double-click to advance --------
+    // Smallest signed angular delta between two yaws, in degrees.
+    const yawDelta = (a: number, b: number) => {
+      let d = ((a - b + 540) % 360) - 180;
+      return Math.abs(d);
+    };
+
+    const handleDblClick = (ev: MouseEvent) => {
+      const v = instanceRef.current;
+      if (!v) return;
+      const { rooms: liveRooms, brands: liveBrands } = liveRef.current;
+      const currentSlug = v.getScene?.();
+      const currentRoom = liveRooms.find((r) => (r.slug ?? r.id) === currentSlug);
+      if (!currentRoom) return;
+
+      const slugOf = (r: { slug?: string | null; id: string } | undefined) =>
+        r ? r.slug ?? r.id : undefined;
+      const entranceSlug = slugOf(entranceRoom);
+      const corridorSlug = slugOf(corridorRoom);
+      const salleSlug = slugOf(salleRoom);
+
+      // Get the yaw the user double-clicked on.
+      let clickYaw: number | null = null;
+      try {
+        const coords = v.mouseEventToCoords?.(ev);
+        if (coords) clickYaw = coords[1];
+      } catch {
+        /* fall through */
+      }
+
+      if (currentRoom.kind === "entrance") {
+        // Anywhere → go up the stairs into the corridor.
+        if (corridorSlug) v.loadScene(corridorSlug, 0, 0, 100);
+        return;
+      }
+
+      if (currentRoom.kind === "corridor") {
+        // Click in the back zone (~ yaw 180) → return to the hall.
+        if (clickYaw !== null && yawDelta(clickYaw, 180) <= BACK_HIT_HALF) {
+          if (entranceSlug) v.loadScene(entranceSlug, 0, 0, 100);
+          return;
+        }
+        // Find the closest brand door by yaw.
+        if (clickYaw !== null && liveBrands.length > 0 && salleSlug) {
+          let bestIdx = -1;
+          let bestDist = Infinity;
+          liveBrands.forEach((_, i) => {
+            const pairIndex = Math.floor(i / 2);
+            const side = i % 2 === 0 ? -1 : 1;
+            const baseYaw = DOOR_PAIR_YAWS[pairIndex] ?? 6;
+            const doorYaw = side * baseYaw;
+            const d = yawDelta(clickYaw!, doorYaw);
+            if (d < bestDist) {
+              bestDist = d;
+              bestIdx = i;
+            }
+          });
+          if (bestIdx >= 0 && bestDist <= DOOR_HIT_HALF) {
+            cbRef.current.onSelectBrand(liveBrands[bestIdx].id);
+            v.loadScene(salleSlug, 0, 0, 100);
+          }
+        }
+        return;
+      }
+
+      if (currentRoom.kind === "salle") {
+        // Anywhere → return to the corridor.
+        if (corridorSlug) v.loadScene(corridorSlug, 0, 0, 100);
+        return;
+      }
+    };
+
+    el.addEventListener("dblclick", handleDblClick);
+
     return () => {
+      el.removeEventListener("dblclick", handleDblClick);
       try {
         viewer.destroy();
       } catch {
@@ -250,6 +295,7 @@ export function PannellumViewer({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config]);
+
 
   // External room change (HUD) → tell pannellum to load that scene
   useEffect(() => {
@@ -265,5 +311,13 @@ export function PannellumViewer({
     }
   }, [currentRoomId, rooms]);
 
-  return <div ref={containerRef} className="absolute inset-0 bg-black" />;
+  return (
+    <div className="absolute inset-0 bg-black">
+      <div ref={containerRef} className="absolute inset-0" />
+      <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-black/55 backdrop-blur-sm border border-[color:var(--gold)]/30 text-[10px] tracking-[0.18em] uppercase text-[color:var(--gold-soft)] font-sans">
+        Double-cliquez pour avancer
+      </div>
+    </div>
+  );
 }
+
