@@ -57,16 +57,11 @@ export type PannellumViewerHandle = {
   zoomOut: () => void;
 };
 
-// Fixed door positions in the corridor panorama — visual openings on left/right.
-// Yaws are evenly spaced; brands cycle through them, supporting unlimited creators.
-const DOOR_POSITIONS: { yaw: number; pitch: number }[] = [
-  { yaw: -135, pitch: -5 },
-  { yaw: -75, pitch: -5 },
-  { yaw: -35, pitch: -5 },
-  { yaw: 35, pitch: -5 },
-  { yaw: 75, pitch: -5 },
-  { yaw: 135, pitch: -5 },
-];
+// Yaw range used to spread doors along visible corridor openings.
+// Brands are evenly distributed: no overlap regardless of how many.
+const CORRIDOR_YAW_MIN = -150;
+const CORRIDOR_YAW_MAX = 150;
+const DOOR_PITCH = -2;
 
 export function PannellumViewer({
   rooms,
@@ -96,18 +91,17 @@ export function PannellumViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<PannellumViewerInstance | null>(null);
 
-  // Stable callbacks via refs so config doesn't rebuild on every render
+  // Stable callbacks via refs so config doesn't rebuild on every render.
   const cbRef = useRef({ onChangeRoom, onOpenGarment, onOpenBrand, onSelectBrand });
   cbRef.current = { onChangeRoom, onOpenGarment, onOpenBrand, onSelectBrand };
 
-  const salleRoom = useMemo(() => rooms.find((r) => r.kind === "salle"), [rooms]);
-  const corridorRoom = useMemo(() => rooms.find((r) => r.kind === "corridor"), [rooms]);
-  const activeBrand = useMemo(
-    () => brands.find((b) => b.id === activeBrandId) ?? null,
-    [brands, activeBrandId],
-  );
+  // Live state for the salle scene — accessed via ref so brand switches don't remount.
+  const liveRef = useRef({ activeBrandId, activeBrandPieces, brands });
+  liveRef.current = { activeBrandId, activeBrandPieces, brands };
 
-  // Build pannellum config
+  const salleRoom = useMemo(() => rooms.find((r) => r.kind === "salle"), [rooms]);
+
+  // Build pannellum config (depends only on rooms / hotspots / brands count, not on activeBrand)
   const config = useMemo(() => {
     if (rooms.length === 0) return null;
     const scenes: Record<string, PannellumScene> = {};
@@ -119,7 +113,6 @@ export function PannellumViewer({
 
       const hs: PannellumHotSpot[] = [];
 
-      // Stored hotspots (nav, mannequins, hangers, brand wall)
       for (const h of roomHotspots) {
         if (h.type === "nav" && h.target_room_id) {
           const targetSlug = idToSlug.get(h.target_room_id);
@@ -133,47 +126,47 @@ export function PannellumViewer({
             cssClass: "pnlm-hotspot-museum pnlm-hotspot-nav",
           });
         } else if (room.kind === "salle" && h.type === "garmentInfo") {
-          // Map slot_index → active brand's piece at that index
           const idx = h.slot_index ?? 0;
-          const piece = activeBrandPieces[idx] ?? null;
-          const active = !!piece;
           hs.push({
             type: "info",
             yaw: h.yaw,
             pitch: h.pitch,
-            text: active ? piece!.name : "Pièce à venir",
-            cssClass: active
-              ? "pnlm-hotspot-museum pnlm-hotspot-garment"
-              : "pnlm-hotspot-museum pnlm-hotspot-empty",
-            clickHandlerFunc: active ? () => cbRef.current.onOpenGarment(piece!.id) : () => {},
+            text: "Pièce",
+            cssClass: "pnlm-hotspot-museum pnlm-hotspot-garment",
+            clickHandlerFunc: () => {
+              const piece = liveRef.current.activeBrandPieces[idx];
+              if (piece) cbRef.current.onOpenGarment(piece.id);
+            },
           });
         } else if (room.kind === "salle" && h.type === "brandWall") {
-          const active = !!activeBrand;
           hs.push({
             type: "info",
             yaw: h.yaw,
             pitch: h.pitch,
-            text: active ? activeBrand!.name : "Identité de la maison",
-            cssClass: active
-              ? "pnlm-hotspot-museum pnlm-hotspot-wall"
-              : "pnlm-hotspot-museum pnlm-hotspot-empty",
-            clickHandlerFunc: active
-              ? () => cbRef.current.onOpenBrand(activeBrand!.id)
-              : () => {},
+            text: "Identité de la maison",
+            cssClass: "pnlm-hotspot-museum pnlm-hotspot-wall",
+            clickHandlerFunc: () => {
+              const id = liveRef.current.activeBrandId;
+              if (id) cbRef.current.onOpenBrand(id);
+            },
           });
         }
       }
 
-      // Corridor: inject one door per brand (cycling through fixed yaw positions).
-      // Supports unlimited brands without touching the code.
-      if (room.kind === "corridor" && salleRoom) {
+      // Corridor: one door per brand, evenly spaced — supports unlimited brands.
+      if (room.kind === "corridor" && salleRoom && brands.length > 0) {
         const salleSlug = idToSlug.get(salleRoom.id) ?? salleRoom.slug ?? salleRoom.id;
+        const n = brands.length;
+        const span = CORRIDOR_YAW_MAX - CORRIDOR_YAW_MIN;
         brands.forEach((brand, i) => {
-          const pos = DOOR_POSITIONS[i % DOOR_POSITIONS.length];
+          const yaw =
+            n === 1
+              ? 0
+              : CORRIDOR_YAW_MIN + (span * i) / (n - 1);
           hs.push({
             type: "info",
-            yaw: pos.yaw,
-            pitch: pos.pitch,
+            yaw,
+            pitch: DOOR_PITCH,
             text: brand.name,
             cssClass: "pnlm-hotspot-museum pnlm-hotspot-door",
             clickHandlerFunc: () => {
@@ -215,7 +208,7 @@ export function PannellumViewer({
       default: { firstScene, sceneFadeDuration: 700, autoLoad: true },
       scenes,
     };
-  }, [rooms, hotspots, brands, activeBrand, activeBrandPieces, salleRoom, corridorRoom]);
+  }, [rooms, hotspots, brands, salleRoom]);
 
   // Mount pannellum once per config build
   useEffect(() => {
