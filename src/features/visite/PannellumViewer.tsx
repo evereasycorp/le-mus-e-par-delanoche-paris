@@ -64,11 +64,13 @@ export type PannellumViewerHandle = {
   zoomOut: () => void;
 };
 
-// Floor pitch for nav/door circles — placed visibly on the ground close to viewer.
-const FLOOR_PITCH = -32;
-// Paired door yaws: first pair flanks the viewer at the START of the corridor,
-// subsequent pairs converge toward the depth of the hallway.
+// Paired brand-door yaws used both as visual reference and as click-routing zones.
 const DOOR_PAIR_YAWS = [85, 50, 28, 16, 10];
+// Half-width (in degrees) of the yaw zone that routes a double-click to a given door.
+const DOOR_HIT_HALF = 22;
+// Half-width of the "back" zone (around yaw 180) that routes to the previous scene.
+const BACK_HIT_HALF = 60;
+
 
 
 export function PannellumViewer({
