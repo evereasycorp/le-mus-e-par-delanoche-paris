@@ -329,6 +329,24 @@ export function PannellumViewer({
       };
     }
 
+    // ===== Mode diagnostic : duplique chaque hotspot de navigation
+    // en y attachant une étiquette yaw/pitch visible au-dessus du marqueur.
+    const decorateDebug = (list: PannellumHotSpot[]): PannellumHotSpot[] => {
+      if (!debug) return list;
+      const extras: PannellumHotSpot[] = [];
+      for (const h of list) {
+        if (!h.cssClass || !h.cssClass.includes("pnlm-hotspot-arrow")) continue;
+        extras.push({
+          type: "info",
+          yaw: h.yaw,
+          pitch: h.pitch + 6,
+          cssClass: "pnlm-hotspot-debug-label",
+          text: `${h.text ?? ""} · yaw ${h.yaw.toFixed(1)}° / pitch ${h.pitch.toFixed(1)}°`,
+        });
+      }
+      return [...list, ...extras];
+    };
+
     // ===== Scène virtuelle "Palier" (haut de l'escalier) =====
     // Réutilise la panorama du hall avec un cadrage légèrement plus élevé.
     // C'est ICI que se trouvent les entrées Art, Littérature ET couloir.
