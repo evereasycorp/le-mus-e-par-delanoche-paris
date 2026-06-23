@@ -61,11 +61,12 @@ export type PannellumViewerHandle = {
   zoomOut: () => void;
 };
 
-// Yaw range used to spread doors along visible corridor openings.
-// Brands are evenly distributed: no overlap regardless of how many.
-const CORRIDOR_YAW_MIN = -150;
-const CORRIDOR_YAW_MAX = 150;
-const DOOR_PITCH = -2;
+// Floor pitch for nav/door circles — placed visibly on the ground close to viewer.
+const FLOOR_PITCH = -32;
+// Paired door yaws: first pair flanks the viewer at the START of the corridor,
+// subsequent pairs converge toward the depth of the hallway.
+const DOOR_PAIR_YAWS = [85, 50, 28, 16, 10];
+
 
 export function PannellumViewer({
   rooms,
