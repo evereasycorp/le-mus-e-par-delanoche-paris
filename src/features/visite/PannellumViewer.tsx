@@ -311,5 +311,13 @@ export function PannellumViewer({
     }
   }, [currentRoomId, rooms]);
 
-  return <div ref={containerRef} className="absolute inset-0 bg-black" />;
+  return (
+    <div className="absolute inset-0 bg-black">
+      <div ref={containerRef} className="absolute inset-0" />
+      <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-black/55 backdrop-blur-sm border border-[color:var(--gold)]/30 text-[10px] tracking-[0.18em] uppercase text-[color:var(--gold-soft)] font-sans">
+        Double-cliquez pour avancer
+      </div>
+    </div>
+  );
 }
+
