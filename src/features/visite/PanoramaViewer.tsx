@@ -54,14 +54,20 @@ export function PanoramaViewer({ floor }: { floor: number }) {
     [rawHotspots],
   );
 
-  // À chaque changement de salle, oriente la caméra vers le premier hotspot nav visible
-  // pour qu'un point de navigation soit immédiatement à l'écran.
+  // À chaque changement de salle, oriente la caméra vers un point intéressant
+  // (brandWall dans une salle de marque, premier nav dans le couloir) pour qu'un
+  // élément interactif soit immédiatement visible sans avoir à drague.
   useEffect(() => {
     if (!currentRoomId || hotspots.length === 0) return;
-    const nav = hotspots.find((h) => h.type === "nav");
-    const target = nav ?? hotspots[0];
+    const room = rooms.find((r) => r.id === currentRoomId);
+    let target = hotspots[0];
+    if (room?.kind === "brand_room") {
+      target = hotspots.find((h) => h.type === "brandWall") ?? target;
+    } else {
+      target = hotspots.find((h) => h.type === "nav") ?? target;
+    }
     useVisiteStore.getState().setOrientation((target.yaw * Math.PI) / 180, 0);
-  }, [currentRoomId, hotspots]);
+  }, [currentRoomId, hotspots, rooms]);
 
   const brandIds = useMemo(
     () => Array.from(new Set(hotspots.map((h) => h.brand_id).filter(Boolean) as string[])),
