@@ -50,6 +50,9 @@
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
   --color-marble: var(--marble);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
 }
