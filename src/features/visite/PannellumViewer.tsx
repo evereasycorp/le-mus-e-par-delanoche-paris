@@ -12,8 +12,12 @@ type PannellumHotSpot = {
   text?: string;
   sceneId?: string;
   cssClass?: string;
+  targetYaw?: number;
+  targetPitch?: number;
+  targetHfov?: number;
   clickHandlerFunc?: () => void;
 };
+
 
 type PannellumScene = {
   type: "equirectangular";
