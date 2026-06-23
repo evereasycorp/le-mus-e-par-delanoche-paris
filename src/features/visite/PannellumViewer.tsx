@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import "pannellum/build/pannellum.css";
 import "pannellum/build/pannellum.js";
@@ -126,6 +126,11 @@ export function PannellumViewer({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<PannellumViewerInstance | null>(null);
+  const [debug, setDebug] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).has("debug");
+  });
+  const [hud, setHud] = useState({ yaw: 0, pitch: 0, hfov: DEFAULT_HFOV, scene: "" });
 
   // Démarre l'ambiance sonore au premier clic utilisateur.
   useMuseumAudio(true);
@@ -324,6 +329,24 @@ export function PannellumViewer({
       };
     }
 
+    // ===== Mode diagnostic : duplique chaque hotspot de navigation
+    // en y attachant une étiquette yaw/pitch visible au-dessus du marqueur.
+    const decorateDebug = (list: PannellumHotSpot[]): PannellumHotSpot[] => {
+      if (!debug) return list;
+      const extras: PannellumHotSpot[] = [];
+      for (const h of list) {
+        if (!h.cssClass || !h.cssClass.includes("pnlm-hotspot-arrow")) continue;
+        extras.push({
+          type: "info",
+          yaw: h.yaw,
+          pitch: h.pitch + 6,
+          cssClass: "pnlm-hotspot-debug-label",
+          text: `${h.text ?? ""} · yaw ${h.yaw.toFixed(1)}° / pitch ${h.pitch.toFixed(1)}°`,
+        });
+      }
+      return [...list, ...extras];
+    };
+
     // ===== Scène virtuelle "Palier" (haut de l'escalier) =====
     // Réutilise la panorama du hall avec un cadrage légèrement plus élevé.
     // C'est ICI que se trouvent les entrées Art, Littérature ET couloir.
@@ -416,6 +439,12 @@ export function PannellumViewer({
       };
     }
 
+    // Applique la décoration debug à toutes les scènes construites.
+    for (const key of Object.keys(scenes)) {
+      const sc = scenes[key];
+      if (sc.hotSpots) sc.hotSpots = decorateDebug(sc.hotSpots);
+    }
+
     const firstRoom =
       rooms.find((r) => r.kind === "entrance") ??
       rooms.find((r) => r.kind === "corridor") ??
@@ -435,7 +464,7 @@ export function PannellumViewer({
       scenes,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rooms, hotspots, brands, entranceRoom, corridorRoom, salleRoom]);
+  }, [rooms, hotspots, brands, entranceRoom, corridorRoom, salleRoom, debug]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -477,12 +506,35 @@ export function PannellumViewer({
     try { viewer.loadScene(sceneId); } catch { /* ignore */ }
   }, [currentRoomId, rooms]);
 
+  // Diagnostic : sonde la caméra à 8 Hz pour afficher yaw / pitch / hfov / scène.
+  useEffect(() => {
+    if (!debug) return;
+    const id = window.setInterval(() => {
+      const v = instanceRef.current;
+      if (!v) return;
+      try {
+        setHud({
+          yaw: v.getYaw?.() ?? 0,
+          pitch: v.getPitch?.() ?? 0,
+          hfov: v.getHfov(),
+          scene: v.getScene?.() ?? "",
+        });
+      } catch { /* ignore */ }
+    }, 125);
+    return () => window.clearInterval(id);
+  }, [debug]);
+
   const currentRoom = rooms.find((r) => r.id === currentRoomId);
   const isInSalle = currentRoom?.kind === "salle";
   const corridorSlug = corridorRoom?.slug ?? corridorRoom?.id ?? null;
 
   const handleExitSalle = () => {
     if (corridorSlug) goToScene(corridorSlug, 0, 0);
+  };
+
+  const copyHudCoords = () => {
+    const txt = `scene: ${hud.scene} · yaw: ${hud.yaw.toFixed(2)}° · pitch: ${hud.pitch.toFixed(2)}° · hfov: ${hud.hfov.toFixed(1)}°`;
+    try { navigator.clipboard?.writeText(txt); toast("Coordonnées copiées", { duration: 1500 }); } catch { /* ignore */ }
   };
 
   return (
@@ -499,6 +551,48 @@ export function PannellumViewer({
           <span aria-hidden>←</span>
           Sortir
         </button>
+      )}
+
+      {/* Bouton de bascule du mode diagnostic (discret, en bas à droite). */}
+      <button
+        type="button"
+        onClick={() => setDebug((d) => !d)}
+        className={`absolute bottom-6 right-4 z-20 px-2.5 py-1 rounded-[2px] border text-[9px] tracking-[0.24em] uppercase font-mono backdrop-blur-sm transition ${
+          debug
+            ? "bg-[color:var(--gold)]/20 border-[color:var(--gold)] text-[color:var(--gold-soft)]"
+            : "bg-black/40 border-white/20 text-white/50 hover:text-white/80 hover:border-white/40"
+        }`}
+        aria-label="Basculer le mode diagnostic"
+        title="Mode diagnostic — alignement des hotspots"
+      >
+        {debug ? "DIAG · ON" : "DIAG"}
+      </button>
+
+      {debug && (
+        <>
+          {/* Réticule + axes au centre de l'écran. */}
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <div className="relative w-40 h-40">
+              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[color:var(--gold)]/60" />
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-[color:var(--gold)]/60" />
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border border-[color:var(--gold)] bg-[color:var(--gold)]/30" />
+            </div>
+          </div>
+
+          {/* Lecture temps réel des coordonnées caméra. */}
+          <button
+            type="button"
+            onClick={copyHudCoords}
+            className="absolute top-4 right-4 z-20 px-3 py-2 rounded-[2px] bg-black/70 backdrop-blur-sm border border-[color:var(--gold)]/40 text-[color:var(--gold-soft)] text-[10px] font-mono leading-relaxed text-left hover:border-[color:var(--gold)] transition"
+            title="Cliquer pour copier les coordonnées"
+          >
+            <div className="opacity-60 text-[8px] uppercase tracking-[0.24em] mb-1">Diagnostic</div>
+            <div>scene&nbsp;: <span className="text-white/90">{hud.scene || "—"}</span></div>
+            <div>yaw&nbsp;&nbsp;&nbsp;: <span className="text-white/90">{hud.yaw.toFixed(2)}°</span></div>
+            <div>pitch&nbsp;: <span className="text-white/90">{hud.pitch.toFixed(2)}°</span></div>
+            <div>hfov&nbsp;&nbsp;: <span className="text-white/90">{hud.hfov.toFixed(1)}°</span></div>
+          </button>
+        </>
       )}
 
       <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-black/55 backdrop-blur-sm border border-[color:var(--gold)]/30 text-[10px] tracking-[0.18em] uppercase text-[color:var(--gold-soft)] font-sans">

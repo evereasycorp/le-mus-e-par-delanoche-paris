@@ -344,3 +344,23 @@
 }
 
 
+/* ===== Mode diagnostic : étiquettes yaw/pitch sur les hotspots de navigation ===== */
+.pnlm-hotspot.pnlm-hotspot-debug-label {
+  width: auto !important;
+  height: auto !important;
+  background: rgba(201, 169, 97, 0.92) !important;
+  border: 1px solid #2b2218 !important;
+  color: #2b2218 !important;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace !important;
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  padding: 3px 6px !important;
+  border-radius: 2px !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  transform: translate(-50%, -50%) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.pnlm-hotspot.pnlm-hotspot-debug-label::before,
+.pnlm-hotspot.pnlm-hotspot-debug-label::after { content: none !important; }
+
