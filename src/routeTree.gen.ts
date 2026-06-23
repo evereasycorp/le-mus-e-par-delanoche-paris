@@ -14,6 +14,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as FavorisRouteImport } from './routes/favoris'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
+import { Route as AdminCalibrateRouteImport } from './routes/admin-calibrate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SalleSlugRouteImport } from './routes/salle.$slug'
@@ -44,6 +45,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin-login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCalibrateRoute = AdminCalibrateRouteImport.update({
+  id: '/admin-calibrate',
+  path: '/admin-calibrate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -68,6 +74,7 @@ const EtageNumRoute = EtageNumRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-calibrate': typeof AdminCalibrateRoute
   '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
   '/favoris': typeof FavorisRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-calibrate': typeof AdminCalibrateRoute
   '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
   '/favoris': typeof FavorisRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-calibrate': typeof AdminCalibrateRoute
   '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
   '/favoris': typeof FavorisRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin-calibrate'
     | '/admin-login'
     | '/auth'
     | '/favoris'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/admin-calibrate'
     | '/admin-login'
     | '/auth'
     | '/favoris'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin-calibrate'
     | '/admin-login'
     | '/auth'
     | '/favoris'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AdminCalibrateRoute: typeof AdminCalibrateRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AuthRoute: typeof AuthRoute
   FavorisRoute: typeof FavorisRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-calibrate': {
+      id: '/admin-calibrate'
+      path: '/admin-calibrate'
+      fullPath: '/admin-calibrate'
+      preLoaderRoute: typeof AdminCalibrateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AdminCalibrateRoute: AdminCalibrateRoute,
   AdminLoginRoute: AdminLoginRoute,
   AuthRoute: AuthRoute,
   FavorisRoute: FavorisRoute,
