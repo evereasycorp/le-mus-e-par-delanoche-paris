@@ -183,3 +183,41 @@
   }
 
 }
+
+/* ---------- Pannellum 360° viewer overrides ---------- */
+.pnlm-container { background: #0d0a07 !important; }
+.pnlm-load-box, .pnlm-about-msg { display: none !important; }
+.pnlm-hotspot-museum {
+  width: 44px; height: 44px; border-radius: 9999px;
+  background: rgba(244, 241, 234, 0.92);
+  border: 1.5px solid #B08D57;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+.pnlm-hotspot-museum:hover { transform: scale(1.08); background: #F4F1EA; }
+.pnlm-hotspot-museum.pnlm-hotspot-nav::after {
+  content: ""; display: block; width: 12px; height: 12px; margin: 14px auto;
+  border-right: 2px solid #2b2218; border-bottom: 2px solid #2b2218;
+  transform: rotate(-45deg);
+}
+.pnlm-hotspot-museum.pnlm-hotspot-garment { background: rgba(176, 141, 87, 0.85); }
+.pnlm-hotspot-museum.pnlm-hotspot-garment::after {
+  content: "·"; display: block; text-align: center; line-height: 40px;
+  font-size: 28px; color: #F4F1EA;
+}
+.pnlm-hotspot-museum.pnlm-hotspot-wall::after {
+  content: "M"; display: block; text-align: center; line-height: 40px;
+  font-family: "Cormorant Garamond", serif; font-size: 20px; color: #2b2218;
+}
+.pnlm-hotspot-museum.pnlm-hotspot-empty {
+  background: rgba(244, 241, 234, 0.45);
+  border-style: dashed; opacity: 0.6; cursor: default;
+}
+.pnlm-tooltip span {
+  background: rgba(43, 34, 24, 0.92) !important;
+  color: #F4F1EA !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: 11px !important; letter-spacing: 0.04em;
+  border-radius: 2px !important; padding: 4px 8px !important;
+}
