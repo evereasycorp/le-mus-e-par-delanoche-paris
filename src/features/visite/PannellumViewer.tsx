@@ -191,14 +191,6 @@ export function PannellumViewer({
         yaw: 0,
         pitch: 0,
         autoLoad: true,
-
-      scenes[sceneId] = {
-        type: "equirectangular",
-        panorama: resolvePanoramaUrl(room.panorama_url),
-        hfov: 100,
-        yaw: 0,
-        pitch: 0,
-        autoLoad: true,
         showZoomCtrl: false,
         showFullscreenCtrl: false,
         showControls: false,
@@ -216,7 +208,7 @@ export function PannellumViewer({
       default: { firstScene, sceneFadeDuration: 700, autoLoad: true },
       scenes,
     };
-  }, [rooms, hotspots, brands, activeBrand, activeBrandPieces, salleRoom, corridorRoom]);
+  }, [rooms, hotspots, brands, salleRoom]);
 
   // Mount pannellum once per config build
   useEffect(() => {
