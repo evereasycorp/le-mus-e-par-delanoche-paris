@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import "pannellum/build/pannellum.css";
 import "pannellum/build/pannellum.js";
 import { resolvePanoramaUrl } from "./panoramas";
+import { useMuseumAudio, playFootstep } from "./useMuseumAudio";
 import type { Hotspot, Room, BrandLite, PieceLite } from "./types";
 
 // Minimal typing for the global pannellum API we use.
@@ -73,22 +74,30 @@ export type PannellumViewerHandle = {
   zoomOut: () => void;
 };
 
-// --- Tuning constants -------------------------------------------------------
-// More human-like field of view: less fisheye distortion.
-const DEFAULT_HFOV = 75;
-const MIN_HFOV = 45;   // Plus de zoom avant
-const MAX_HFOV = 95;   // Moins de zoom arrière (réduit l'effet grand-angle)
-const SCENE_FADE = 900;
+// --- Camera tuning : vision quasi-humaine, moins de fisheye -----------------
+const DEFAULT_HFOV = 72;
+const MIN_HFOV = 42;
+const MAX_HFOV = 92;
+const SCENE_FADE = 1000;
+const CAMERA_FRICTION = 0.22;
 
-// Floor pitch for navigation arrows (looking down at the ground in front).
+// --- Floor markers ---------------------------------------------------------
 const FLOOR_PITCH = -34;
-// Door arrows: more realistic perspective — wider near the camera, narrower
-// deeper in the corridor. Pairs left/right alternating.
-const DOOR_PAIR_YAWS = [55, 30, 18, 12];
 
-// Virtual scene id for the upper landing (top of the staircase). Reuses the
-// entrance panorama but with a different framing to simulate progression.
+// Yaws réels des ouvertures du couloir mesurés sur la panorama :
+//   paire avant  : ±83°   (portes les plus proches du visiteur)
+//   paire arrière: ±166°  (portes derrière le visiteur)
+// Index pair → yaw distance par rapport au visiteur, side alterne L/R.
+const DOOR_PAIR_YAWS = [83, 166];
+
+// Yaws des ailes Art / Littérature dans le hall (depuis le palier).
+const ART_WING_YAW = -96;
+const LITT_WING_YAW = 96;
+
+// IDs de scènes virtuelles (réutilisent une panorama existante avec un
+// cadrage différent — donne l'impression de progression spatiale).
 const LANDING_SCENE_ID = "__entrance_landing";
+const CORRIDOR_DEEP_ID = "__corridor_deep";
 
 export function PannellumViewer({
   rooms,
@@ -118,6 +127,9 @@ export function PannellumViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<PannellumViewerInstance | null>(null);
 
+  // Démarre l'ambiance sonore au premier clic utilisateur.
+  useMuseumAudio(true);
+
   const cbRef = useRef({ onChangeRoom, onOpenGarment, onOpenBrand, onSelectBrand });
   cbRef.current = { onChangeRoom, onOpenGarment, onOpenBrand, onSelectBrand };
 
@@ -128,13 +140,14 @@ export function PannellumViewer({
   const entranceRoom = useMemo(() => rooms.find((r) => r.kind === "entrance"), [rooms]);
   const corridorRoom = useMemo(() => rooms.find((r) => r.kind === "corridor"), [rooms]);
 
-  // Smooth cinematographic scene transition (dolly-zoom-in feel + fade).
-  const goToScene = (sceneId: string, targetYaw = 0, targetPitch = 0) => {
+  // Transition cinématographique : dolly-zoom + fade + petit pas sonore.
+  const goToScene = (sceneId: string, targetYaw = 0, targetPitch = 0, targetHfov = DEFAULT_HFOV) => {
     const v = instanceRef.current;
     if (!v) return;
+    playFootstep();
     const startHfov = v.getHfov();
-    const endHfov = 52;
-    const duration = 520;
+    const endHfov = 50;
+    const duration = 540;
     const t0 = performance.now();
     const step = (now: number) => {
       const v2 = instanceRef.current;
@@ -145,16 +158,24 @@ export function PannellumViewer({
       if (t < 1) {
         requestAnimationFrame(step);
       } else {
-        try { v2.loadScene(sceneId, targetPitch, targetYaw, DEFAULT_HFOV); } catch { /* ignore */ }
+        try { v2.loadScene(sceneId, targetPitch, targetYaw, targetHfov); } catch { /* ignore */ }
       }
     };
     requestAnimationFrame(step);
   };
 
   const showSoon = (label: string) => {
+    playFootstep();
     toast(`${label} — cette aile du musée ouvrira prochainement.`, {
       duration: 3200,
       className: "font-sans",
+    });
+  };
+
+  const showMonogramInfo = () => {
+    toast("« Le Sceau » — sculpture monumentale, marbre ivoire & bronze patiné.", {
+      description: "Œuvre emblématique de la collection Delanoche Paris.",
+      duration: 4200,
     });
   };
 
@@ -173,7 +194,7 @@ export function PannellumViewer({
       hfov: DEFAULT_HFOV,
       minHfov: MIN_HFOV,
       maxHfov: MAX_HFOV,
-      friction: 0.18,
+      friction: CAMERA_FRICTION,
       yaw: 0,
       pitch: 0,
       autoLoad: true,
@@ -187,40 +208,32 @@ export function PannellumViewer({
       const roomHotspots = hotspots.filter((h) => h.room_id === room.id);
       const hs: PannellumHotSpot[] = [];
 
-      // ===== HALL D'ENTRÉE — ground floor =====
+      // ===== HALL D'ENTRÉE (rez-de-chaussée) =====
       if (room.kind === "entrance") {
-        // 1) Pied de l'escalier — monter
+        // Médaillon "Le Sceau" — œuvre centrale du musée, posée au pied de
+        // l'escalier (signature patrimoniale plutôt qu'un logo publicitaire).
         hs.push({
           type: "info",
-          pitch: FLOOR_PITCH,
+          pitch: -18,
           yaw: 0,
-          cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow",
+          cssClass: "pnlm-hotspot-museum pnlm-hotspot-monogram",
+          text: "« Le Sceau » — Delanoche Paris",
+          clickHandlerFunc: showMonogramInfo,
+        });
+        // UN SEUL hotspot de navigation au sol : monter l'escalier.
+        hs.push({
+          type: "info",
+          pitch: FLOOR_PITCH + 4,
+          yaw: 0,
+          cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow pnlm-hotspot-stair",
           text: "Monter l'escalier",
-          clickHandlerFunc: () => goToScene(LANDING_SCENE_ID, 0, 0),
-        });
-        // 2) Aile gauche — Art (à venir)
-        hs.push({
-          type: "info",
-          pitch: -14,
-          yaw: -92,
-          cssClass: "pnlm-hotspot-museum pnlm-hotspot-soon",
-          text: "Aile Art",
-          clickHandlerFunc: () => showSoon("Aile Art"),
-        });
-        // 3) Aile droite — Littérature (à venir)
-        hs.push({
-          type: "info",
-          pitch: -14,
-          yaw: 92,
-          cssClass: "pnlm-hotspot-museum pnlm-hotspot-soon",
-          text: "Aile Littérature",
-          clickHandlerFunc: () => showSoon("Aile Littérature"),
+          clickHandlerFunc: () => goToScene(LANDING_SCENE_ID, 0, 2, 70),
         });
       }
 
       // ===== COULOIR DES CRÉATEURS =====
       if (room.kind === "corridor") {
-        // Retour vers le palier (haut de l'escalier).
+        // Retour vers le palier.
         if (entranceSlug) {
           hs.push({
             type: "info",
@@ -228,45 +241,30 @@ export function PannellumViewer({
             yaw: 180,
             cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow pnlm-hotspot-back",
             text: "Retour au palier",
-            clickHandlerFunc: () => goToScene(LANDING_SCENE_ID, 180, 0),
+            clickHandlerFunc: () => goToScene(LANDING_SCENE_ID, 180, 0, 70),
           });
         }
-        // Flèche centrale "avancer" — petit effet d'avancée (dolly zoom).
+        // Avancer plus profondément dans le couloir (cadrage rapproché).
         hs.push({
           type: "info",
-          pitch: FLOOR_PITCH + 6,
+          pitch: FLOOR_PITCH + 8,
           yaw: 0,
           cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow pnlm-hotspot-forward",
           text: "Avancer dans le couloir",
-          clickHandlerFunc: () => {
-            const v = instanceRef.current;
-            if (!v) return;
-            // Petite avancée optique — réduit le fov pour simuler un pas en avant.
-            const startHfov = v.getHfov();
-            const endHfov = Math.max(MIN_HFOV + 5, startHfov - 14);
-            const t0 = performance.now();
-            const dur = 600;
-            const step = (now: number) => {
-              const t = Math.min(1, (now - t0) / dur);
-              const e = 1 - Math.pow(1 - t, 3);
-              try { v.setHfov(startHfov + (endHfov - startHfov) * e); } catch { /* ignore */ }
-              if (t < 1) requestAnimationFrame(step);
-            };
-            requestAnimationFrame(step);
-          },
+          clickHandlerFunc: () => goToScene(CORRIDOR_DEEP_ID, 0, 0, 62),
         });
-        // Une flèche par porte de créateur, alignée devant l'ouverture.
+        // Une flèche par porte de créateur, centrée devant l'ouverture réelle.
         if (salleSlug) {
           brands.forEach((b, i) => {
             const pairIndex = Math.floor(i / 2);
             const side = i % 2 === 0 ? -1 : 1;
-            const baseYaw = DOOR_PAIR_YAWS[pairIndex] ?? 8;
+            const baseYaw = DOOR_PAIR_YAWS[pairIndex] ?? 83;
             const doorYaw = side * baseYaw;
             hs.push({
               type: "info",
               pitch: FLOOR_PITCH,
               yaw: doorYaw,
-              cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow",
+              cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow pnlm-hotspot-door",
               text: b.name,
               clickHandlerFunc: () => {
                 cbRef.current.onSelectBrand(b.id);
@@ -289,7 +287,7 @@ export function PannellumViewer({
         });
       }
 
-      // ----- Existing in-room info hotspots (garment / brand wall) -----
+      // ----- Hotspots in-room existants (pièces, mur de marque) -----
       for (const h of roomHotspots) {
         if (h.type === "nav") continue;
         if (room.kind === "salle" && h.type === "garmentInfo") {
@@ -327,16 +325,38 @@ export function PannellumViewer({
     }
 
     // ===== Scène virtuelle "Palier" (haut de l'escalier) =====
+    // Réutilise la panorama du hall avec un cadrage légèrement plus élevé.
+    // C'est ICI que se trouvent les entrées Art, Littérature ET couloir.
     if (entranceRoom && corridorSlug && entranceSlug) {
       const landingHs: PannellumHotSpot[] = [
+        // Couloir des créateurs — droit devant.
         {
           type: "info",
-          pitch: FLOOR_PITCH + 2,
+          pitch: FLOOR_PITCH + 6,
           yaw: 0,
-          cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow",
-          text: "Entrer dans le couloir des créateurs",
+          cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow pnlm-hotspot-forward",
+          text: "Couloir des créateurs",
           clickHandlerFunc: () => goToScene(corridorSlug, 0, 0),
         },
+        // Aile Art — à gauche.
+        {
+          type: "info",
+          pitch: -8,
+          yaw: ART_WING_YAW,
+          cssClass: "pnlm-hotspot-museum pnlm-hotspot-soon",
+          text: "Aile Art",
+          clickHandlerFunc: () => showSoon("Aile Art"),
+        },
+        // Aile Littérature — à droite.
+        {
+          type: "info",
+          pitch: -8,
+          yaw: LITT_WING_YAW,
+          cssClass: "pnlm-hotspot-museum pnlm-hotspot-soon",
+          text: "Aile Littérature",
+          clickHandlerFunc: () => showSoon("Aile Littérature"),
+        },
+        // Redescendre dans le hall.
         {
           type: "info",
           pitch: FLOOR_PITCH,
@@ -348,11 +368,51 @@ export function PannellumViewer({
       ];
       scenes[LANDING_SCENE_ID] = {
         ...baseScene(entranceRoom.panorama_url),
-        // Cadrage légèrement plus serré, vue depuis le haut de l'escalier.
-        hfov: 68,
-        pitch: 4,
+        hfov: 70,
+        pitch: 2,
         yaw: 0,
         hotSpots: landingHs,
+      };
+    }
+
+    // ===== Scène virtuelle "Couloir profond" (avancée dans le couloir) =====
+    // Réutilise la panorama couloir avec un cadrage plus serré sur le vista.
+    if (corridorRoom && corridorSlug && salleSlug && entranceSlug) {
+      const deepHs: PannellumHotSpot[] = [
+        // Reculer vers l'entrée du couloir.
+        {
+          type: "info",
+          pitch: FLOOR_PITCH,
+          yaw: 180,
+          cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow pnlm-hotspot-back",
+          text: "Reculer",
+          clickHandlerFunc: () => goToScene(corridorSlug, 0, 0),
+        },
+        // Portes les plus proches (paire arrière, devenues plus proches depuis
+        // qu'on a avancé) : on les rend cliquables ici aussi.
+      ];
+      if (salleSlug) {
+        brands.slice(2, 4).forEach((b, i) => {
+          const side = i % 2 === 0 ? -1 : 1;
+          deepHs.push({
+            type: "info",
+            pitch: FLOOR_PITCH,
+            yaw: side * 90,
+            cssClass: "pnlm-hotspot-museum pnlm-hotspot-arrow pnlm-hotspot-door",
+            text: b.name,
+            clickHandlerFunc: () => {
+              cbRef.current.onSelectBrand(b.id);
+              goToScene(salleSlug, 0, 0);
+            },
+          });
+        });
+      }
+      scenes[CORRIDOR_DEEP_ID] = {
+        ...baseScene(corridorRoom.panorama_url),
+        hfov: 62,
+        pitch: 0,
+        yaw: 0,
+        hotSpots: deepHs,
       };
     }
 
@@ -370,7 +430,7 @@ export function PannellumViewer({
         hfov: DEFAULT_HFOV,
         minHfov: MIN_HFOV,
         maxHfov: MAX_HFOV,
-        friction: 0.18,
+        friction: CAMERA_FRICTION,
       },
       scenes,
     };
@@ -384,8 +444,12 @@ export function PannellumViewer({
     instanceRef.current = viewer;
     viewer.on("scenechange", (...args: unknown[]) => {
       const sceneId = String(args[0] ?? "");
-      // Le palier virtuel renvoie sur la room "entrance" pour l'état HUD.
-      const resolvedId = sceneId === LANDING_SCENE_ID ? (entranceRoom?.slug ?? entranceRoom?.id ?? sceneId) : sceneId;
+      const resolvedId =
+        sceneId === LANDING_SCENE_ID
+          ? (entranceRoom?.slug ?? entranceRoom?.id ?? sceneId)
+          : sceneId === CORRIDOR_DEEP_ID
+          ? (corridorRoom?.slug ?? corridorRoom?.id ?? sceneId)
+          : sceneId;
       const room = rooms.find((r) => (r.slug ?? r.id) === resolvedId);
       if (room) cbRef.current.onChangeRoom(room.id);
     });
