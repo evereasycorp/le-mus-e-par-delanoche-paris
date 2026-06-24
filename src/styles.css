@@ -55,6 +55,10 @@
   --color-ink-soft: var(--ink-soft);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-museum-black: var(--museum-black);
+  --color-bronze: var(--bronze);
+  --color-ivory: var(--ivory);
+  --color-ivory-soft: var(--ivory-soft);
 }
 
 :root {
@@ -76,6 +80,12 @@
   --cream: oklch(0.975 0.012 88); /* fond clair page d'accueil */
   --ink: oklch(0.18 0.012 70); /* texte sombre sur cream */
   --ink-soft: oklch(0.42 0.015 70); /* texte secondaire sur cream */
+
+  /* Palette Le Musée — galerie nocturne (page d'accueil) */
+  --museum-black: #0b0a08;
+  --bronze: #b08d57;
+  --ivory: #ede6d6;
+  --ivory-soft: rgba(237, 230, 214, 0.72);
 
   --primary: var(--gold);
   --primary-foreground: oklch(0.12 0.005 270);
