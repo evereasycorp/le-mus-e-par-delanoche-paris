@@ -55,6 +55,10 @@
   --color-ink-soft: var(--ink-soft);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-museum-black: var(--museum-black);
+  --color-bronze: var(--bronze);
+  --color-ivory: var(--ivory);
+  --color-ivory-soft: var(--ivory-soft);
 }
 
 :root {
