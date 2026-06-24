@@ -78,7 +78,6 @@ function Hall() {
           <Link
             to="/etage/$num"
             params={{ num: "1" }}
-            search={{ becomeExposant: "1" } as never}
             className="inline-flex items-center gap-2 rounded-sm bg-[color:var(--bronze)] px-3 py-2.5 text-[10px] font-medium tracking-room uppercase text-[color:var(--museum-black)] transition-transform hover:scale-[1.02] sm:px-5 sm:py-3"
           >
             Devenir exposant
